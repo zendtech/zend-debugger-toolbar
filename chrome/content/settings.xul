@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml" title="Zend Debugger Toolbar Settings" onload="zendLoadSettings();" id="zendSettings" orient="vertical" ondialogaccept="zendSaveSettings(); return true;" buttons="accept,cancel">
+
+	<command id="cmd_toggleAutoDetect" oncommand="toggleAutoDetect()" />
+
+	<vbox flex="0">
+	<groupbox id="zendSettingsGeneral"><caption label="General"/>
+		<checkbox id="zendSettingsSearch" label="Enable Search Toolbar" />
+	</groupbox>
+
+	<groupbox orient="vertical"><caption label="Debug Session Settings"/>
+		<checkbox id="zendSettingsLocal" label="Debug Local Copy (if available)" />
+		<checkbox id="zendSettingsFirstLine" label="Break on the First Line" />
+	</groupbox>
+	</vbox>
+
+	<groupbox orient="vertical"><caption label="IDE Settings"/>
+		<hbox>
+		<description value="Executable Location"/><spacer flex="1"/><textbox id="zendSettingsPath"/>
+		<button label="Browse"
+			onclick="zendBrowseForZDEPath();"
+			tooltiptext="Browse for IDE executable"
+			id="zendBrowseForZDEPathBtn"
+		/>
+		</hbox>
+		<separator orient="horizontal" class="groove"/>
+		<radiogroup id="zendSettingsRadio">
+		<hbox>
+		<radio label="Auto Detect Settings" id="zendSettingsAutodetect" command="cmd_toggleAutoDetect" selected="true"/>
+		<spacer flex="1"/>
+		<button label="Test"
+		        onclick="testAutoDetect();"
+		        tooltiptext="Test the auto detection server"
+		        id="zendSettingsAutodetectTest"
+		/>
+		</hbox>
+		<hbox>
+		<separator orient="vertical"/>
+		<label value="Broadcasting Port" id="zendSettingsAutodetectPortLbl"/>
+		<spacer flex="1"/>
+		<textbox id="zendSettingsAutodetectPort"/>
+		</hbox>
+		<radio label="Manual Settings" id="zendSettingsManual" command="cmd_toggleAutoDetect"/>
+		<hbox>
+		<separator orient="vertical"/>
+		<label value="Debug Port" id="zendSettingsPortLbl"/>
+		<spacer flex="1"/>
+		<textbox id="zendSettingsPort"/>
+		</hbox>
+		<hbox>
+		<separator orient="vertical"/>
+		<label value="IP Address" id="zendSettingsIPLbl"/>
+		<spacer flex="1"/>
+		<textbox id="zendSettingsIP"/>
+		</hbox>
+		<hbox>
+		<separator orient="vertical"/>
+		<checkbox label="Encrypt Communications Using SSL" id="zendSettingsUseSSL"/>
+		</hbox>
+		</radiogroup>
+	</groupbox>
+
+<script type="application/x-javascript" src="chrome://jslib/content/jslib.js"/>
+<script type="application/x-javascript" src="settings.js"/>
+<script type="application/x-javascript" src="toolbar.js"/>
+
+</dialog>

@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+
+<overlay id="zend" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" orient="vertical">
+
+<script type="application/x-javascript" src="chrome://jslib/content/jslib.js" />;
+<script type="application/x-javascript" src="toolbar.js"/>
+<script type="application/x-javascript" src="settings.js"/>
+
+<script type="application/x-javascript">
+  window.addEventListener("load",zendDisplayCheck,true);
+</script>
+
+<menupopup id="view_toolbars_popup">
+  <menuitem id="view_zend_menuitem" label="Zend Debugger Toolbar"
+     class="menuitem-iconic" type="checkbox" observes="cmd_zend"/>
+</menupopup>
+
+<popup id="contentAreaContextMenu">
+	<menuseparator id="zend-context-separator"/>
+	<menu label="Zend Debugger" id="zend-context">
+		<menupopup id="zend-context-menu" onpopupshowing="setRightClickMenu();">
+		<menuitem label="Debug" accesskey="G" id="zend-debug-context" oncommand="zendDebug(false)"/>
+		<menuitem label="Debug next page" accesskey="N" id="zendDebugNextPage-context" oncommand="zendDebugChangeStatus(this)" type="checkbox"/>
+		<menuitem label="Debug this frame" accesskey="F" id="zendDebugFrame-context" oncommand="zendDebug(true)" type="checkbox"/>
+		<menuitem label="Debug all forms (POST) on this site" accesskey="P" id="zendDebugPOST-context" oncommand="zendDebugChangeStatus(this)" type="checkbox"/>
+		<menuitem label="Debug all pages on this site" accesskey="A" id="zendDebugAll-context" oncommand="zendDebugChangeStatus(this)" type="checkbox"/>
+		<menuseparator id="zend-context-debug-separator"/>
+		<menuitem label="Profile" accesskey="P" id="zendProfile-context" oncommand="zendProfile()"/>
+		</menupopup>
+	</menu>
+</popup>
+
+
+<toolbarpalette id="BrowserToolbarPalette" customizable="true">
+	<toolbarbutton
+		label="Debug"
+		id="zendDebug"
+		image="chrome://zend-debugger-toolbar/content/images/debug.gif"
+		oncommand="zendDebug(false)"
+		tooltiptext="Debug current page"
+		accesskey="G"
+	/>
+	<toolbarbutton
+		label=""
+		type="menu"
+		id="zendDebugDropdown"
+		image="chrome://zend-debugger-toolbar/content/images/debugmenu.gif"
+		tooltiptext="Debug menu"
+	>
+		<menupopup>
+		<menuitem label="Current page" tooltiptext="Debug current page" onclick="zendDebug(false)" />
+		<menuseparator/>
+		<menuitem label="Next page" tooltiptext="Debug the next page" id="zendDebugNextPage" oncommand="zendDebugChangeStatus(this)" type="checkbox" />
+		<menuitem label="All forms (POST) on this site" tooltiptext="Debug every submitted form" id="zendDebugPOST" oncommand="zendDebugChangeStatus(this)" type="checkbox" />
+		<menuitem label="All pages on this site" tooltiptext="Debug every visited page" id="zendDebugAll" oncommand="zendDebugChangeStatus(this)" type="checkbox"/>
+	        </menupopup>
+	</toolbarbutton>
+	<toolbarbutton
+		label="Profile"
+		id="zendProfile"
+		image="chrome://zend-debugger-toolbar/content/images/profile.gif"
+		oncommand="zendProfile()"
+		tooltiptext="Profile current page"
+		accesskey="P"
+	/>
+	<toolbarbutton
+		class="zendButton"
+		label="Extra Stuff "
+		type="menu"
+		id="zendMoreStuff"
+		image="chrome://zend-debugger-toolbar/content/images/settings.gif"
+	>
+		<menupopup>
+		<menuitem label="Settings" onclick="zendOpenSettings()" />
+		<menuseparator/>
+		<menu label="Zend.com Sites" id="zend_com_sites_menu">
+			<menupopup  id="zend_com_sites_menupopup">
+			<menuitem label="Zend.com" onclick="zendLoadPage('http://www.zend.com/')"/>
+			<menuitem label="Zend.com's Developer Zone" onclick="zendLoadPage('http://devzone.zend.com/')"/>
+			<menuitem label="Zend Store" onclick="zendLoadPage('http://shop.zend.com/')"/>
+			</menupopup>
+		</menu>
+		<menu label="Zend Products" id="zend_products_menu">
+			<menupopup id="zend_products_menupopup">
+			<menuitem label="Z-Ray" onclick="zendLoadPage('http://www.zend.com/products/server/z-ray')"/>
+			<menuitem label="Zend Server" onclick="zendLoadPage('http://www.zend.com/server')"/>
+			<menuitem label="Zend Studio" onclick="zendLoadPage('http://www.zend.com/products/zend_studio')"/>
+			<menuitem label="Zend Guard" onclick="zendLoadPage('http://www.zend.com/products/zend-guard')"/>
+			<menuitem label="Zend Framework" onclick="zendLoadPage('http://framework.zend.com/')"/>
+			<menuitem label="Zend Expressive" onclick="zendLoadPage('http://zendframework.github.io/zend-expressive/')"/>
+			<menuitem label="Apigility" onclick="zendLoadPage('https://apigility.org/')"/>
+			<menuseparator/>
+			<menuitem label="Consulting Services" onclick="zendLoadPage('http://www.zend.com/services/custom-implementation-services')"/>
+			</menupopup>
+		</menu>
+		<menu label="PHP Education" id="zend_products_menu">
+			<menupopup id="zend_products_menupopup">
+			<menuitem label="Certification" onclick="zendLoadPage('http://www.zend.com/services/certification')"/>
+			<menuitem label="Online Training" onclick="zendLoadPage('http://www.zend.com/en/services/training')"/>
+			<menuitem label="Training Partners" onclick="zendLoadPage('http://www.zend.com/en/services/training/training-partners')"/>
+			</menupopup>
+		</menu>
+		<menuitem label="Get Support" onclick="zendLoadPage('http://www.zend.com/support/')"/>
+		<menuseparator/>
+		<menuitem label="php.net" onclick="zendLoadPage('http://www.php.net/')"/>
+		<menuseparator/>
+		<menuitem label="About" onclick="zendAbout()" />
+		</menupopup>
+	</toolbarbutton>
+
+	<vbox id="separator"/>
+
+	<hbox pack="end" flex="1" id="zendsearch" >
+		<box valign="middle" orient="vertical" >
+			<text value="Search for PHP information:" />
+		</box>
+		<menulist
+			id="zendSearchTerms"
+			editable="true"
+			onkeyup="if (event.keyCode == 13) { zendSearch(); }"
+			minwidth="150"
+			width="150">
+		<menupopup onpopuphiding=""/>
+		</menulist>
+		<box valign="middle" orient="vertical" >
+			<text value=" on " />
+		</box>
+		<menulist
+			id="zendSearchSites"
+			minwidth="120"
+			width="120"
+			onkeyup="if (event.keyCode == 13) { zendSearch(); }"
+			oncommand="zendSearch();">
+			<menupopup onpopuphiding="" editable="false">
+				<menuitem data="http://www.zend.com/search/?q=" label="Zend.com" editable="false"/>
+				<menuitem data="https://support.zend.com/hc/search?query=" label="Zend Support" editable="false"/>
+				<menuitem data="http://www.php.net/results.php?q=" label="PHP.net" editable="false"/>
+				<menuitem data="http://www.google.com/search?q=" label="Google" editable="false"/>
+			</menupopup>
+		</menulist>
+		<toolbarbutton
+			label="Go"
+			id="zendSearchSitesBtn"
+			image="chrome://zend-debugger-toolbar/content/images/go.png"
+			oncommand="zendSearch()"
+			tooltiptext="Search for PHP information"
+		/>
+	</hbox>
+</toolbarpalette>
+
+<toolbox id="navigator-toolbox">
+	<toolbar accesskey="Z"
+	         class="chromeclass-toolbar"
+	         context="toolbar-context-menu"
+	         customizable="true"
+	         hidden="false"
+	         iconsize="small"
+	         id="ztb"
+	         inherits="collapsed,hidden"
+	         mode="full"
+	         persist="collapsed,hidden"
+	         toolbarname="Zend Debugger Toolbar"
+	         defaultset="zendDebug,zendDebugDropdown,zendProfile,zendMoreStuff,zendsearch"
+	/>
+</toolbox>
+
+</overlay>

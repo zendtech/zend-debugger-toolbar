@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+    <Description about="urn:mozilla:install-manifest"
+            em:name="Zend Debugger Toolbar"
+            em:description="Provides integration with Zend debugging and profiling tools. If you would like to contribute, please visit the project home page: https://github.com/zendtech/zend-debugger-firefox"
+            em:creator="Zend Technologies Ltd"
+            em:homepageURL="https://github.com/zendtech/zend-debugger-firefox"
+            em:version="2.8.1"
+            em:id="{d5a1be00-693c-11e6-bdf4-0800200c9a66}"
+            em:iconURL="chrome://zend-debugger-toolbar/content/images/zde_icon32.png"
+            em:optionsURL="chrome://zend-debugger-toolbar/content/settings.xul"
+            em:aboutURL="chrome://zend-debugger-toolbar/content/about.xul">
+        <em:targetApplication>
+            <Description>
+                <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+                <em:minVersion>1.5</em:minVersion>
+                <em:maxVersion>50.*</em:maxVersion>
+            </Description>
+        </em:targetApplication>
+    </Description>
+</RDF>
