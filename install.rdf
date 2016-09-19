@@ -6,7 +6,7 @@
             em:creator="Zend Technologies Ltd"
             em:homepageURL="https://github.com/zendtech/zend-debugger-firefox"
             em:version="2.8.1"
-            em:id="{d5a1be00-693c-11e6-bdf4-0800200c9a66}"
+            em:id="{714BDBD0-7E3A-11E6-86F1-66A48202D2A8}"
             em:iconURL="chrome://zend-debugger-toolbar/content/images/zde_icon32.png"
             em:optionsURL="chrome://zend-debugger-toolbar/content/settings.xul"
             em:aboutURL="chrome://zend-debugger-toolbar/content/about.xul">
