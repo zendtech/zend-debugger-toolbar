@@ -1,11 +1,10 @@
 /*******************************************************************************
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/.
  * 
- * Contributor(s):
- * Zend Technologies - initial API and implementation 
- *******************************************************************************/
+ * Contributor(s): Zend Technologies - initial API and implementation
+ ******************************************************************************/
 
 // User defined constants
 const myToolbarId = "ztb"; // <toolbar>'s id
@@ -20,6 +19,7 @@ var ZDE_Protocol;
 var debugMode;
 
 var httpResponseObserver = {
+		
 	observe: function(subject,topic,data){
 		try {
 			this.unregister();
@@ -45,6 +45,7 @@ var httpResponseObserver = {
 	unregister: function(){
 		this.observerService.removeObserver(this, "http-on-examine-response");
 	}
+	
 };
 
 function checkCookieEnabling() {
@@ -83,6 +84,7 @@ function zendEnableSearch(enable){
 }
 
 function zendWindowOnLoad(){
+	zendLoadZDEIPs();
 	zendEnableSearch(zendGetZDESearch());
 
 	try{
@@ -222,7 +224,7 @@ function zendGetActiveDocument(clickedInFrame){
 			/* return current frame */
 			return frame;
 		}
-	} catch(e) { /* let the user select frames - we failed...*/ }
+	} catch(e) { /* let the user select frames - we failed... */ }
 
 	if (window.content.frames != null) {
 		var tmp = new Array;
@@ -265,11 +267,12 @@ function verifyZdeRunning(){
 
 function getZdeSettings(){
 try{
-	// If auto detect is disabled - Use the user supplied arguments - and hope he knows what he is doing
-	if( !zendGetAutodetect() ){
+	// If auto detect is disabled - Use the user supplied arguments - and hope
+	// he knows what he is doing
+	if( !zendGetZDEAutodetect() ){
 		ZDE_IP = zendGetZDEIP(true);
 		ZDE_Port = zendGetZDEPort();
-		ZDE_UseSSL = zendGetUseSSL();
+		ZDE_UseSSL = zendGetZDEUseSSL();
 		ZDE_FastFile = false; // true only in autodetect
 		ZDE_Protocol = null;
 		return true;
@@ -415,7 +418,7 @@ function zendDebugChangeStatus(ActiveMI){
 	}
 }
 
-//add a search term to the drop down.
+// add a search term to the drop down.
 function zendAddSearchTerms(searchTerms){
 	var zendSearchTerms = document.getElementById("zendSearchTerms");
 	var i;

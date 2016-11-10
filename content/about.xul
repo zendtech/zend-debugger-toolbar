@@ -9,7 +9,7 @@
 			<vbox>
 				<hbox>
 					<description value="Zend Debugger Toolbar" class="name"/>
-					<description class="name">2.8.1</description>
+					<description class="name">2.8.2</description>
 				</hbox>
 				<description value="Author(s)" class="title"/>
 				<description>Zend Technologies Ltd - Initial API and implementation</description>

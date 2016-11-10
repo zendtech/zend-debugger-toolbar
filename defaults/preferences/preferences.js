@@ -1,0 +1,9 @@
+pref('extensions.zend.ZDE_Search', true);
+pref('extensions.zend.ZDE_Local', true);
+pref('extensions.zend.ZDE_FirstLine', true);
+pref('extensions.zend.ZDE_Path', '');
+pref('extensions.zend.ZDE_AutodetectPort', '20080');
+pref('extensions.zend.ZDE_IP', '127.0.0.1');
+pref('extensions.zend.ZDE_Port', '10137');
+pref('extensions.zend.ZDE_UseSSL', false);
+pref('extensions.zend.ZDE_Autodetect', true);

@@ -3,7 +3,7 @@
 
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml" title="Zend Debugger Toolbar Settings" onload="zendLoadSettings();" id="zendSettings" orient="vertical" ondialogaccept="zendSaveSettings(); return true;" buttons="accept,cancel">
 
-	<command id="cmd_toggleAutoDetect" oncommand="toggleAutoDetect()" />
+	<command id="cmd_zendToggleAutoDetect" oncommand="zendToggleAutoDetect()" />
 
 	<vbox flex="0">
 	<groupbox id="zendSettingsGeneral"><caption label="General"/>
@@ -28,10 +28,10 @@
 		<separator orient="horizontal" class="groove"/>
 		<radiogroup id="zendSettingsRadio">
 		<hbox>
-		<radio label="Auto Detect Settings" id="zendSettingsAutodetect" command="cmd_toggleAutoDetect" selected="true"/>
+		<radio label="Auto Detect Settings" id="zendSettingsAutodetect" command="cmd_zendToggleAutoDetect" selected="true"/>
 		<spacer flex="1"/>
 		<button label="Test"
-		        onclick="testAutoDetect();"
+		        onclick="zendTestAutoDetect();"
 		        tooltiptext="Test the auto detection server"
 		        id="zendSettingsAutodetectTest"
 		/>
@@ -42,7 +42,7 @@
 		<spacer flex="1"/>
 		<textbox id="zendSettingsAutodetectPort"/>
 		</hbox>
-		<radio label="Manual Settings" id="zendSettingsManual" command="cmd_toggleAutoDetect"/>
+		<radio label="Manual Settings" id="zendSettingsManual" command="cmd_zendToggleAutoDetect"/>
 		<hbox>
 		<separator orient="vertical"/>
 		<label value="Debug Port" id="zendSettingsPortLbl"/>
