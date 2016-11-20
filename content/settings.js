@@ -6,70 +6,170 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
-var detectedIPs = "";
-
-var onDNSLookupListener = {
-		
+const zendDetectedIPs = [ "127.0.0.1" ];
+const zendOnDNSLookupListener = {
 	onLookupComplete : function(request, record, status) {
-		if (record.hasMore()) {
-			detectedIPs += record.getNextAddrAsString();
-		}
 		while (record.hasMore()) {
-			detectedIPs += ", " + record.getNextAddrAsString();
+			zendDetectedIPs.push(record.getNextAddrAsString());
 		}
 	}
-
 };
 
 function zendGetZDEPrefs() {
 	return Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService)
-			.getBranch("extensions.zend.");
+			.getBranch("extensions.zend.zdt.");
 }
 
 function zendGetZDESearch() {
-	return zendGetZDEPrefs().getBoolPref("ZDE_Search");
+	return zendGetZDEPrefs().getBoolPref("enableSearch");
 }
 
 function zendGetZDELocal() {
-	return zendGetZDEPrefs().getBoolPref("ZDE_Local");
+	return zendGetZDEPrefs().getBoolPref("debugLocalCopy");
 }
 
 function zendGetZDEFirstLine() {
-	return zendGetZDEPrefs().getBoolPref("ZDE_FirstLine");
-}
-
-function zendGetZDEPath(showPrompt) {
-	return zendGetZDEPrefs().getCharPref("ZDE_Path");
+	return zendGetZDEPrefs().getBoolPref("breakAtFirstLine");
 }
 
 function zendGetZDEPort() {
-	return zendGetZDEPrefs().getCharPref("ZDE_Port");
+	return zendGetZDEPrefs().getCharPref("debugPort");
 }
 
 function zendGetZDEUseSSL() {
-	return zendGetZDEPrefs().getBoolPref("ZDE_UseSSL");
+	return zendGetZDEPrefs().getBoolPref("useSSL");
 }
 
 function zendGetZDEAutodetect() {
-	return zendGetZDEPrefs().getBoolPref("ZDE_Autodetect");
+	return zendGetZDEPrefs().getBoolPref("autodetectSettings");
 }
 
 function zendGetZDEAutodetectPort() {
-	return zendGetZDEPrefs().getCharPref("ZDE_AutodetectPort");
+	return zendGetZDEPrefs().getCharPref("autodetectPort");
+}
+
+function zendGetZDEDebugMode() {
+	return zendGetZDEPrefs().getCharPref("debugMode");
+}
+
+function zendGetZDEEnableFrameSelect() {
+	return zendGetZDEPrefs().getBoolPref("enableFrameSelect");
+}
+
+function zendGetZDEPath(ask) {
+	var ideLauncherPath = zendGetZDEPrefs().getCharPref("ideLauncherPath");
+	if (!ask) {
+		return ideLauncherPath;
+	}
+	if (ideLauncherPath == null || ideLauncherPath == "") {
+		ideLauncherPath = zendBrowseForZDEPath();
+	}
+	zendGetZDEPrefs().setCharPref("ideLauncherPath", ideLauncherPath);
+	return ideLauncherPath;
 }
 
 function zendGetZDEIP(ask) {
+	var ip = zendGetZDEPrefs().getCharPref("debugHost");
 	if (!ask) {
-		return zendGetZDEPrefs().getCharPref("ZDE_IP");
+		return ip;
 	}
-	var ip = null;
-	while (ip == "" || ip == null) {
-		ip = prompt(
-				"Please enter the client IP address for Zend Debugger engine.\n",
-		"");
+	if (ip == "" || ip == null) {
+		var message = "Please enter the Zend Debugger client IP address.\n";
+		if (zendDetectedIPs.length > 0) {
+			message += "\nThe following IP addresses have been detected:\n\n";
+			var i;
+			for (i = 0; i < zendDetectedIPs.length; i++) {
+				message += "\u2022 " + zendDetectedIPs[i] + "\n";
+			}
+			message += "\n";
+		}
+		while (ip == "" || ip == null) {
+			ip = prompt(message, "");
+		}
 	}
-	zendGetZDEPrefs().setCharPref("ZDE_IP", ip);
+	zendGetZDEPrefs().setCharPref("debugHost", ip);
 	return ip;
+}
+
+function zendSetZDEPath() {
+	document.getElementById("zendSettingsIDELauncherPath").value = zendBrowseForZDEPath();
+}
+
+function zendSetZDEDebugMode(value) {
+	zendGetZDEPrefs().setCharPref("debugMode", value);
+}
+
+function zendLoadSettings() {
+	document.getElementById("zendSettings").getButton("extra2").label = "Uninstall";
+	document.getElementById("zendSettingsSearch").checked = zendGetZDESearch();
+	document.getElementById("zendSettingsLocal").checked = zendGetZDELocal();
+	document.getElementById("zendSettingsFirstLine").checked = zendGetZDEFirstLine();
+	document.getElementById("zendSettingsEnableFrameSelect").checked = zendGetZDEEnableFrameSelect();
+	document.getElementById("zendSettingsIDELauncherPath").value = zendGetZDEPath(false);
+	document.getElementById("zendSettingsAutodetectPort").value = zendGetZDEAutodetectPort();
+	document.getElementById("zendSettingsIP").value = zendGetZDEIP(false);
+	document.getElementById("zendSettingsPort").value = zendGetZDEPort();
+	document.getElementById("zendSettingsUseSSL").checked = zendGetZDEUseSSL();
+	if (zendGetZDEAutodetect())
+		document.getElementById("zendSettingsRadio").selectedIndex = 0;
+	else
+		document.getElementById("zendSettingsRadio").selectedIndex = 1;
+	zendToggleAutoDetect();
+}
+
+function zendSaveSettings() {
+	var prefs = zendGetZDEPrefs();
+	prefs.setBoolPref("enableSearch", document.getElementById("zendSettingsSearch").checked);
+	prefs.setBoolPref("debugLocalCopy", document.getElementById("zendSettingsLocal").checked);
+	prefs.setBoolPref("breakAtFirstLine", document.getElementById("zendSettingsFirstLine").checked);
+	prefs.setBoolPref("enableFrameSelect", document.getElementById("zendSettingsEnableFrameSelect").checked);
+	prefs.setCharPref("ideLauncherPath", document.getElementById("zendSettingsIDELauncherPath").value);
+	prefs.setBoolPref("autodetectSettings", document.getElementById("zendSettingsAutodetect").selected);
+	prefs.setCharPref("autodetectPort", document.getElementById("zendSettingsAutodetectPort").value);
+	prefs.setCharPref("debugHost", document.getElementById("zendSettingsIP").value);
+	prefs.setCharPref("debugPort", document.getElementById("zendSettingsPort").value);
+	prefs.setBoolPref("useSSL", document.getElementById("zendSettingsUseSSL").checked);
+}
+
+function zendDetectIPs() {
+	var dnsService = Components.classes["@mozilla.org/network/dns-service;1"]
+			.getService(Components.interfaces.nsIDNSService);
+	if (dnsService != null) {
+		dnsService.asyncResolve(dnsService.myHostName, dnsService.RESOLVE_DISABLE_IPV6, zendOnDNSLookupListener, null);
+	}
+}
+
+function zendToggleAutoDetect() {
+	try {
+		var ZDE_Autodetect = document.getElementById("zendSettingsAutodetect").selected;
+		document.getElementById("zendSettingsAutodetectPort").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsAutodetectPortLbl").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsAutodetectTest").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsIDELauncherLbl").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsIDELauncherPath").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsIDELauncherBtn").disabled = !ZDE_Autodetect;
+		document.getElementById("zendSettingsIP").disabled = ZDE_Autodetect;
+		document.getElementById("zendSettingsIPLbl").disabled = ZDE_Autodetect;
+		document.getElementById("zendSettingsPort").disabled = ZDE_Autodetect;
+		document.getElementById("zendSettingsPortLbl").disabled = ZDE_Autodetect;
+		document.getElementById("zendSettingsUseSSL").disabled = ZDE_Autodetect;
+	} catch (e) {
+		console.exception(e);
+	}
+}
+
+function zendTestAutoDetect() {
+	var ZDE_Autodetect = zendGetZDEAutodetect();
+	zendGetZDEPrefs().setBoolPref("autodetectSettings", true);
+	document.getElementById("zendSettingsAutodetectTest").disabled = true;
+	zendFetchConnectionSettings(function(connectionProps) {
+		// Show success message here, failures are handled in callback owner
+		if (connectionProps.get("dbg-valid")) {
+			alert("Success!\n\nDebug connection settings could be automatically detected.");
+		}
+		document.getElementById("zendSettingsAutodetectTest").disabled = false;
+		zendGetZDEPrefs().setBoolPref("autodetectSettings", ZDE_Autodetect);
+	});
 }
 
 function zendBrowseForZDEPath() {
@@ -80,96 +180,10 @@ function zendBrowseForZDEPath() {
 		fp.appendFilters(nsIFilePicker.filterAll);
 		var res = fp.show();
 		if (res == nsIFilePicker.returnOK) {
-			document.getElementById("zendSettingsPath").value = fp.file.path;
+			return fp.file.path;
 		}
 	} catch (e) {
+		console.exception(e);
 	}
-}
-
-function zendSaveSettings() {
-	var prefs = zendGetZDEPrefs();
-	prefs.setBoolPref("ZDE_Search", document.getElementById("zendSettingsSearch").checked);
-	prefs.setBoolPref("ZDE_Local", document.getElementById("zendSettingsLocal").checked);
-	prefs.setBoolPref("ZDE_FirstLine", document.getElementById("zendSettingsFirstLine").checked);
-	prefs.setCharPref("ZDE_Path", document.getElementById("zendSettingsPath").value);
-	prefs.setBoolPref("ZDE_Autodetect", document.getElementById("zendSettingsAutodetect").selected);
-	prefs.setCharPref("ZDE_AutodetectPort", document.getElementById("zendSettingsAutodetectPort").value);
-	prefs.setCharPref("ZDE_IP", document.getElementById("zendSettingsIP").value);
-	prefs.setCharPref("ZDE_Port", document.getElementById("zendSettingsPort").value);
-	prefs.setBoolPref("ZDE_UseSSL", document.getElementById("zendSettingsUseSSL").checked);
-}
-
-function zendLoadSettings() {
-	console.log("1");
-	document.getElementById("zendSettings").getButton("extra2").label = "Uninstall";
-	document.getElementById("zendSettingsSearch").checked = zendGetZDESearch();
-	console.log("2");
-	document.getElementById("zendSettingsLocal").checked = zendGetZDELocal();
-	console.log("3");
-	document.getElementById("zendSettingsFirstLine").checked = zendGetZDEFirstLine();
-	console.log("4");
-	document.getElementById("zendSettingsPath").value = zendGetZDEPath();
-	console.log("5");
-	document.getElementById("zendSettingsAutodetectPort").value = zendGetZDEAutodetectPort();
-	console.log("6");
-	document.getElementById("zendSettingsIP").value = zendGetZDEIP(false);
-	console.log("7");
-	document.getElementById("zendSettingsPort").value = zendGetZDEPort();
-	console.log("8");
-	document.getElementById("zendSettingsUseSSL").checked = zendGetZDEUseSSL();
-	console.log("9");
-	if (zendGetZDEAutodetect())
-		document.getElementById("zendSettingsRadio").selectedIndex = 0;
-	else
-		document.getElementById("zendSettingsRadio").selectedIndex = 1;
-	console.log("10");
-	zendToggleAutoDetect();
-}
-
-function zendLoadZDEIPs() {
-	var dnsService = Components.classes["@mozilla.org/network/dns-service;1"]
-			.getService(Components.interfaces.nsIDNSService);
-	if (dnsService != null) {
-		dnsService.asyncResolve(dnsService.myHostName, dnsService.RESOLVE_DISABLE_IPV6, onDNSLookupListener, null);
-	}
-}
-
-function zendToggleAutoDetect() {
-	try {
-		var ZDE_Autodetect = document.getElementById("zendSettingsAutodetect").selected;
-		document.getElementById("zendSettingsAutodetectPort").disabled = !ZDE_Autodetect;
-		document.getElementById("zendSettingsAutodetectPortLbl").disabled = !ZDE_Autodetect;
-		document.getElementById("zendSettingsAutodetectTest").disabled = !ZDE_Autodetect;
-		document.getElementById("zendSettingsIP").disabled = ZDE_Autodetect;
-		document.getElementById("zendSettingsIPLbl").disabled = ZDE_Autodetect;
-		document.getElementById("zendSettingsPort").disabled = ZDE_Autodetect;
-		document.getElementById("zendSettingsPortLbl").disabled = ZDE_Autodetect;
-		document.getElementById("zendSettingsUseSSL").disabled = ZDE_Autodetect;
-	} catch (e) {
-		alert("Zend Debugger Toolbar internal error has occured.\nPlease restart your browser.");
-	}
-}
-
-function zendTestAutoDetect() {
-	try {
-		// save the current value in the detect port field because
-		// getZdeSettings() reads from the prefs.
-		var autoDetect = document.getElementById("zendSettingsAutodetect").selected;
-		if (!autoDetect)
-			return;
-		zendGetZDEPrefs()
-				.setCharPref("ZDE_AutodetectPort", document.getElementById("zendSettingsAutodetectPort").value);
-		zendGetZDEPrefs().setBoolPref("ZDE_Autodetect", autoDetect);
-		if (!getZdeSettings()) {
-			// do nothing - alert is already displayed at getZdeSettings()...
-		} else {
-			/*
-			 * Don't display ZDE_Port & ZDE_IP since tunneling may be turned on
-			 * and they will make no sense to the user
-			 */
-			alert("Auto Detect test was completed successfully.");
-		}
-	} catch (e) {
-		alert(e);
-	}
+	return "";
 }

@@ -6,491 +6,401 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
-// User defined constants
-const myToolbarId = "ztb"; // <toolbar>'s id
+(function() {
+	zendSetZDEDebugMode("");
+	zendDetectIPs();
+	var windowMM = window.messageManager;
+	windowMM.loadFrameScript("chrome://zend-debugger-toolbar/content/handlers.js", true);
+})();
 
-// ZDE settings:
-var ZDE_IP;
-var ZDE_Port;
-var ZDE_UseSSL;
-var ZDE_FastFile;
-var ZDE_Protocol;
-
-var debugMode;
-
-var httpResponseObserver = {
-		
-	observe: function(subject,topic,data){
+const zendHTTPResponseObserver = {
+	observe: function(subject, topic, data) {
 		try {
 			this.unregister();
-
 			var http = subject.QueryInterface(Components.interfaces.nsIHttpChannel);
 			var header = http.getResponseHeader("X-Zend-Debug-Server");
-			if( header ){
-				if( header != "OK" ) alert("IDE server error:\n"+header);
+			if (header) {
+				if (header != "OK") alert("IDE client error:\n" + header);
 			}
-		} catch(e) { }
-
-		zendWindowOnLoad();
+		} catch(e) {
+			// ignore
+		}
 	},
-
 	get observerService() {
 		return Components.classes["@mozilla.org/observer-service;1"].getService(Components.interfaces.nsIObserverService);
 	},
-
 	register: function(){
 		this.observerService.addObserver(this, "http-on-examine-response", false);
 	},
-
 	unregister: function(){
 		this.observerService.removeObserver(this, "http-on-examine-response");
 	}
-	
-};
-
-function checkCookieEnabling() {
-	document.cookie = '__test__cookie__=1'
-	if ( document.cookie.indexOf('__test__cookie__') != -1) {
-	document.cookie = "__test__cookie__=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-		return true;
-	} else {
-		return false;
-	}
 }
 
-function zendEnableSearch(enable){
-	var display;
-	if( enable ) display = "";
-	else display = "none";
-
-	try {
-		document.getElementById("zendSearchTerms").style.display = display;
-	} catch(e){}
-	try {
-		document.getElementById("zendSearchSites").style.display = display;
-	} catch(e){}
-	try {
-		document.getElementById("zendSearchLbl").style.display = display;
-	} catch(e){}
-	try {
-		document.getElementById("zendSearchLbl2").style.display = display;
-	} catch(e){}
-	try {
-		document.getElementById("zendSearchSitesBtn").style.display = display;
-	} catch(e){}
-	try {
-		document.getElementById("zendsearch").style.display = display;
-	} catch(e){}
-}
-
-function zendWindowOnLoad(){
-	zendLoadZDEIPs();
-	zendEnableSearch(zendGetZDESearch());
-
-	try{
-		var DebugNextPageMI = document.getElementById("zendDebugNextPage");
-		var DebugNextPageContextMI = document.getElementById("zendDebugNextPage-context");
-		var DebugPOSTMI = document.getElementById("zendDebugPOST");
-		var DebugAllMI = document.getElementById("zendDebugAll");
-
-		DebugNextPageMI.setAttribute("checked","false");
-		DebugNextPageContextMI.setAttribute("checked","false");
-		document.getElementById("zendDebug").disabled = false;
-		document.getElementById("zendProfile").disabled = false;
-
-		if ( DebugPOSTMI.getAttribute("checked")!="true" && DebugAllMI.getAttribute("checked")!="true" ) {
-			zendClearDebugCookies();
+function zendCheckCookiesEnabled() {
+	// Send asynchronous call to 'content'
+	var browserMM = gBrowser.selectedBrowser.messageManager;
+	var messageListener = function(message) {
+		if (!message.data.enabled) {
+			alert("To use the Zend Debugger toolbar, enable cookie support in your browser.");
 		}
-	} catch(e) { alert(e); }
+		browserMM.removeMessageListener("zend-fs-zendCheckCookiesEnabled", messageListener);
+	};
+	browserMM.addMessageListener("zend-fs-zendCheckCookiesEnabled", messageListener);
+	browserMM.sendAsyncMessage("zend-cs-zendHandleCookiesEnabled");
 }
 
-function zendDisplayCheck(){
-	zendWindowOnLoad();
+function zendClearDebugCookies() {
+	var cookies = new Array();
+	var cookieSuffix = "; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
+	cookies.push("_bm=" + cookieSuffix);
+	cookies.push("debug_line_bp=" + cookieSuffix);
+	cookies.push("debug_file_bp=" + cookieSuffix);
+	cookies.push("debug_port=" + cookieSuffix);
+	cookies.push("send_debug_header=" + cookieSuffix);
+	cookies.push("debug_host=" + cookieSuffix);
+	cookies.push("start_debug=" + cookieSuffix);
+	cookies.push("debug_stop=" + cookieSuffix);
+	cookies.push("start_profile=" + cookieSuffix);
+	cookies.push("debug_coverage=" + cookieSuffix);
+	cookies.push("send_sess_end=" + cookieSuffix);
+	cookies.push("debug_jit=" + cookieSuffix);
+	cookies.push("debug_start_session=" + cookieSuffix);
+	cookies.push("original_url=" + cookieSuffix);
+	cookies.push("ZendDebuggerCookie=" + cookieSuffix);
+	cookies.push("use_ssl=" + cookieSuffix);
+	cookies.push("debug_fastfile=" + cookieSuffix);
+	cookies.push("debug_protocol=" + cookieSuffix);
+	cookies.push("debug_session_id=" + cookieSuffix);
+	cookies.push("no_remote=" + cookieSuffix);
+	cookies.push("use_remote=" + cookieSuffix);
+	// Broadcast asynchronous call to 'content' process
+	var windowMM = window.messageManager;
+	windowMM.broadcastAsyncMessage("zend-cs-zendHandleDebugCookies", {
+		cookies : cookies,
+		reloadPage : false
+	});
 }
 
-function zendLoadPage(url){
-	window.content.document.location.href=url;
-}
-
-function zendClearDebugCookies(){
-	if( !checkCookieEnabling() ){
-		return;
-	}
-	
-	if (window.content == null) {
-		return;
-	}
-
-	window.content.document.cookie = "_bm=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_line_bp=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_file_bp=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_port=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "send_debug_header=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_host=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "start_debug=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_stop=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "start_profile=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_coverage=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "send_sess_end=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_jit=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_start_session=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "original_url=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "ZendDebuggerCookie=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "use_ssl=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_fastfile=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_protocol=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "debug_session_id=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "no_remote=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-	window.content.document.cookie = "use_remote=; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
-
-}
-
-function zendSetDebugCookies (activeDocument) {
-	zendSetCookies (activeDocument, false);
-}
-
-function zendSetProfileCookies (activeDocument, targetDocument) {
-	zendSetCookies (activeDocument, true);
-}
-
-function zendSetCookies(activeDocument, isProfiling){
-	if(!checkCookieEnabling()){
-		alert("To use the Zend Debugger toolbar, enable cookie support in your browser.");
-		return;
-	}
-
-	if (!verifyZdeRunning()) {
-		return;
-	}
-
-	// try and get the IDE settings
-	if(getZdeSettings()){
-		// connect the observer
-		httpResponseObserver.register();
-	} else {
-		return;
-	}
-
-	if (ZDE_IP != null && ZDE_IP != "") {
-		activeDocument.cookie = "debug_host="+ZDE_IP+"; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	}
-
-	if(ZDE_UseSSL){
-		activeDocument.cookie = "use_ssl=1 ; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	}
-
-	if(ZDE_FastFile){
-		activeDocument.cookie = "debug_fastfile=1 ; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	}
-
-	activeDocument.cookie = "debug_port="+ZDE_Port+"; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	activeDocument.cookie = "start_debug=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	activeDocument.cookie = "send_debug_header=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	activeDocument.cookie = "send_sess_end=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	activeDocument.cookie = "debug_jit=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	activeDocument.cookie = "original_url="+activeDocument.location+"; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-
+function zendSetDebugCookies(isProfiling, triggerSession, connectionProps) {
+	zendCheckCookiesEnabled();
+	var cookies = new Array();
+	var cookieSuffix = "; expires=0; path=/";
+	// Connect the response observer
+	zendHTTPResponseObserver.register();
+	// Set cookies array
+	var dbgIP = connectionProps.get("dbg-host");
+	var dbgPort = connectionProps.get("dbg-port");
+	var dbgUseSSL = connectionProps.get("dbg-use-ssl");
+	var dbgFastFile = connectionProps.get("dbg-fast-file");
+	var dbgProtocol = connectionProps.get("dbg-protocol");
+	// Set cookies that are common for profile and debug session
+	if (dbgIP != null && dbgIP != "")
+		cookies.push("debug_host=" + dbgIP + cookieSuffix);
+	if (dbgUseSSL)
+		cookies.push("use_ssl=1" + cookieSuffix);
+	if (dbgFastFile)
+		cookies.push("debug_fastfile=1" + cookieSuffix);
+	if (dbgProtocol != null)
+		cookies.push("debug_protocol=" + dbgProtocol + cookieSuffix);
+	if (zendGetZDEDebugMode() == "POST")
+		cookies.push("debug_start_session=POST" + cookieSuffix);
+	else if (zendGetZDEDebugMode() == "ALL")
+		cookies.push("debug_start_session=1" + cookieSuffix);
+	cookies.push("debug_port=" + dbgPort + cookieSuffix);
+	cookies.push("start_debug=1" + cookieSuffix);
+	cookies.push("send_debug_header=1" + cookieSuffix);
+	cookies.push("send_sess_end=1" + cookieSuffix);
+	cookies.push("debug_jit=1" + cookieSuffix);
+	cookies.push("debug_session_id=" + (Math.floor(Math.random() * 147483648) + 2000) + cookieSuffix);
+	// Set cookies specific only for profile or debug session
 	if (isProfiling) {
-		activeDocument.cookie = "start_profile=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-		activeDocument.cookie = "debug_coverage=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
+		cookies.push("start_profile=1" + cookieSuffix);
+		cookies.push("debug_coverage=1" + cookieSuffix);
 	} else {
-		if( zendGetZDEFirstLine() ) {
-			activeDocument.cookie = "debug_stop=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-		}
-		if( !zendGetZDELocal() ){
-			activeDocument.cookie = "no_remote=1 ; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-		} else {
-			activeDocument.cookie = "use_remote=1 ; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-		}
+		if (zendGetZDEFirstLine())
+			cookies.push("debug_stop=1" + cookieSuffix);
+		if (!zendGetZDELocal())
+			cookies.push("no_remote=1" + cookieSuffix);
+		else
+			cookies.push("use_remote=1" + cookieSuffix);
 	}
-
-	if(ZDE_Protocol != null){
-		activeDocument.cookie = "debug_protocol=" + ZDE_Protocol + "; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	}
-
-	activeDocument.cookie = "debug_session_id=" + (Math.floor(Math.random() * 147483648) + 2000) + "; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-
-	if (debugMode == "POST") {
-		activeDocument.cookie = "debug_start_session=POST; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	} else if (debugMode == "ALL") {
-		activeDocument.cookie = "debug_start_session=1; expires=Mon, 12 Feb 2035 01:00:00 UTC; path=/";
-	}	
+	var selectFrame = zendGetZDEEnableFrameSelect();
+	// Send asynchronous call to 'content' process
+	var browserMM = gBrowser.selectedBrowser.messageManager;
+	browserMM.addMessageListener("zend-fs-zendSelectFrame", zendSelectFrame);
+	browserMM.sendAsyncMessage("zend-cs-zendHandleDebugCookies", {
+		cookies : cookies,
+		triggerSession : triggerSession,
+		selectFrame : selectFrame
+	});
 }
 
-function zendGetActiveDocument(clickedInFrame){
-	try{
-		var frame = document.popupNode.ownerDocument
-		if (clickedInFrame && (frame != window.content.document)) {
-			/* return current frame */
-			return frame;
+function zendDebug() {
+	zendToggleDebugAndProfile(true);
+	zendFetchConnectionSettings(function(connectionProps) {
+		if (connectionProps.get("dbg-valid")) {
+			zendSetDebugCookies(false, true, connectionProps);
 		}
-	} catch(e) { /* let the user select frames - we failed... */ }
-
-	if (window.content.frames != null) {
-		var tmp = new Array;
-		var currentFrames = window.content.frames;
-
-		if (currentFrames.length > 0) {
-			window.openDialog("chrome://zend-debugger-toolbar/content/frames.xul", 'Frame Selection', 'chrome,dialog,modal', tmp);
-			return tmp[0];
-		}
-	}
-	return window.content.document;
-}
-
-function getZdeSettingString(ZDE_DetectPort){
-	try {
-		var url = "http://127.0.0.1:"+ZDE_DetectPort;
-		var rf = new XMLHttpRequest();
-		rf.open("GET", url, false);
-		// to prevent leaks see Mozilla bug #206947
-		rf.overrideMimeType("text/xml");
-		rf.send(null);
-		if (rf.status!=200)
-			return false;
-		return rf.responseText;
-
-	} catch(e) { return false; }
-}
-
-function verifyZdeRunning(){
-	var ZDE_DetectPort = zendGetZDEAutodetectPort();
-	var settingsString = getZdeSettingString(ZDE_DetectPort);
-		
-	if (!settingsString) {
-		if (confirm("Cannot detect running IDE.\nWould you like to launch it?")) {
-			return zendRunZDE();
-		}
-	}
-	return true;
-}
-
-function getZdeSettings(){
-try{
-	// If auto detect is disabled - Use the user supplied arguments - and hope
-	// he knows what he is doing
-	if( !zendGetZDEAutodetect() ){
-		ZDE_IP = zendGetZDEIP(true);
-		ZDE_Port = zendGetZDEPort();
-		ZDE_UseSSL = zendGetZDEUseSSL();
-		ZDE_FastFile = false; // true only in autodetect
-		ZDE_Protocol = null;
-		return true;
-	} else {
-		var ZDE_DetectPort = zendGetZDEAutodetectPort();
-		var settingsString = getZdeSettingString(ZDE_DetectPort);
-		if( !settingsString ){
-			alert("Cannot auto detect IDE settings at port: "+ZDE_DetectPort);
-			return false;
-		}
-		else{
-			ZDE_IP = null;
-			ZDE_Port = "10000";
-			ZDE_UseSSL = false;
-			ZDE_FastFile = false;
-			ZDE_Protocol = null;
-			settingsArray = settingsString.split("&");
-			var i;
-			for (i=0; i<settingsArray.length; i++) {
-				// ignore setting that are not in the format of xxx=yyy
-				if( settingsArray[i].indexOf("=") == -1 ) continue;
-				// currently we only detect debug_port, debug_host and use_ssl
-				var setting = settingsArray[i].split("=");
-
-				if( setting[0] == "debug_port" ) ZDE_Port=setting[1];
-				else if( setting[0] == "debug_host" ) ZDE_IP=setting[1];
-				else if( setting[0] == "use_ssl" ) ZDE_UseSSL=setting[1];
-				else if( setting[0] == "debug_fastfile" ) ZDE_FastFile=setting[1];
-				else if( setting[0] == "debug_protocol" ) ZDE_Protocol=setting[1];
-			}
-			if( ZDE_IP == null ) return false;
-
-			var zendSettingsPort = document.getElementById("zendSettingsPort");
-			if (zendSettingsPort) {
-				zendSettingsPort.value = ZDE_Port;
-			}
-			var zendSettingsUseSSL = document.getElementById("zendSettingsUseSSL");
-			if (zendSettingsUseSSL) {
-				zendSettingsUseSSL.checked = ZDE_UseSSL;
-			}
-			var zendSettingsIP = document.getElementById("zendSettingsIP");
-			if (zendSettingsIP) {
-				zendSettingsIP.value = ZDE_IP.replace("%2C", ",");
-			}
-
-			return true;
-		}
-	}
-} catch(e) { alert(e); }
-}
-
-function zendDebug(contextMenu){
-	if (document.getElementById("zendDebug").getAttribute("disabled")=="true") {
-		return;
-	}
-
-	var DebugPOSTMI = document.getElementById("zendDebugPOST");
-	var DebugAllMI = document.getElementById("zendDebugAll");
-	if ( DebugPOSTMI.getAttribute("checked")!="true" && DebugAllMI.getAttribute("checked")!="true" ) {
-		zendClearDebugCookies();
-	}
-	var targetDocument = zendGetActiveDocument(contextMenu);
-
-	if (targetDocument == null) {
-		return;
-	}
-
-	// Set the cookies, connect the observer and reload the page...
-	zendSetDebugCookies(targetDocument);
-	document.getElementById("zendDebug").disabled = true;
-	document.getElementById("zendProfile").disabled = true;
-	targetDocument.location.reload();
+		zendToggleDebugAndProfile(false);
+	});
 }
 
 function zendProfile() {
-	if (document.getElementById("zendProfile").getAttribute("disabled")=="true") {
-		return;
-	}
-
-	var DebugPOSTMI = document.getElementById("zendDebugPOST");
-	var DebugAllMI = document.getElementById("zendDebugAll");
-	if ( DebugPOSTMI.getAttribute("checked")!="true" && DebugAllMI.getAttribute("checked")!="true" ) {
-		zendClearDebugCookies();
-	}
-	var targetDocument = zendGetActiveDocument(false);
-
-	if (targetDocument == null) {
-		return;
-	}
-
-	// Set the cookies, connect the observer and reload the page...
-	zendSetProfileCookies (targetDocument);
-	document.getElementById("zendDebug").disabled = true;
-	document.getElementById("zendProfile").disabled = true;
-	targetDocument.location.reload();
-}
-
-function zendDebugChangeStatus(ActiveMI){
-	var DebugNextPageMI = document.getElementById("zendDebugNextPage");
-	var DebugNextPageContextMI = document.getElementById("zendDebugNextPage-context");
-	var DebugPOSTMI = document.getElementById("zendDebugPOST");
-	var DebugPOSTContextMI = document.getElementById("zendDebugPOST-context");
-	var DebugAllMI = document.getElementById("zendDebugAll");
-	var DebugAllContextMI = document.getElementById("zendDebugAll-context");
-
-	var status = ActiveMI.getAttribute("checked");
-	// sync context menu and toolbar checkbox
-	if (ActiveMI == DebugNextPageMI || ActiveMI == DebugNextPageContextMI) {
-		DebugNextPageMI.setAttribute("checked", status);
-		DebugNextPageContextMI.setAttribute("checked", status);
-		DebugPOSTMI.setAttribute("checked", "false");
-		DebugPOSTContextMI.setAttribute("checked", "false");
-		DebugAllMI.setAttribute("checked", "false");
-		DebugAllContextMI.setAttribute("checked", "false");
-	}
-	if (ActiveMI == DebugPOSTMI || ActiveMI == DebugPOSTContextMI) {
-		DebugNextPageMI.setAttribute("checked", "false");
-		DebugNextPageContextMI.setAttribute("checked", "false");
-		DebugPOSTMI.setAttribute("checked", status);
-		DebugPOSTContextMI.setAttribute("checked", status);
-		DebugAllMI.setAttribute("checked", "false");
-		DebugAllContextMI.setAttribute("checked", "false");
-	}
-	if (ActiveMI == DebugAllMI || ActiveMI == DebugAllContextMI) {
-		DebugNextPageMI.setAttribute("checked", "false");
-		DebugNextPageContextMI.setAttribute("checked", "false");
-		DebugPOSTMI.setAttribute("checked", "false");
-		DebugPOSTContextMI.setAttribute("checked", "false");
-		DebugAllMI.setAttribute("checked", status);
-		DebugAllContextMI.setAttribute("checked", status);
-	}
-
-	debugMode = "";
-	if (status == "true") {
-		if (ActiveMI.getAttribute("id") == "zendDebugPOST" || ActiveMI.getAttribute("id") == "zendDebugPOST-context") {
-			debugMode = "POST"; 
-		} else if (ActiveMI.getAttribute("id") == "zendDebugAll" || ActiveMI.getAttribute("id") == "zendDebugAll-context") {
-			debugMode = "ALL"; 
+	zendClearDebugActions();
+	zendToggleDebugAndProfile(true);
+	zendFetchConnectionSettings(function(connectionProps) {
+		if (connectionProps.get("dbg-valid")) {
+			zendSetDebugCookies(true, true, connectionProps);
 		}
-		zendSetDebugCookies(window.content.document);
+		zendToggleDebugAndProfile(false);
+	});
+}
+
+function zendToggleDebugAndProfile(disable) {
+	document.getElementById("zendDebug").disabled = disable;
+	document.getElementById("zendDebugDropdown").disabled = disable;
+	document.getElementById("zendProfile").disabled = disable;
+}
+
+function zendSelectFrame(message) {
+	var frameNames = message.data.frameNames;
+	var result = new Array();
+	var selectedFrame;
+	if (frameNames.length > 0) {
+		window.openDialog("chrome://zend-debugger-toolbar/content/frames.xul", 'Frame Selection',
+				'chrome, dialog, modal', frameNames, result);
+		selectedFrame = result[0];
+	}
+	var browserMM = gBrowser.selectedBrowser.messageManager;
+	browserMM.removeMessageListener("zend-fs-zendSelectFrame", zendSelectFrame);
+	// Send asynchronous call to 'content' process
+	browserMM.sendAsyncMessage("zend-cs-zendHandleSelectedFrame", {
+		selectedFrame : selectedFrame
+	});
+}
+
+function zendDebugChangeStatus(ActiveMI) {
+	var debugNextPageMI = document.getElementById("zendDebugNextPage");
+	var debugNextPageContextMI = document.getElementById("zendDebugNextPage-context");
+	var debugPOSTMI = document.getElementById("zendDebugPOST");
+	var debugPOSTContextMI = document.getElementById("zendDebugPOST-context");
+	var debugAllMI = document.getElementById("zendDebugAll");
+	var debugAllContextMI = document.getElementById("zendDebugAll-context");
+	var checked = ActiveMI.getAttribute("checked");
+	if (ActiveMI == debugNextPageMI || ActiveMI == debugNextPageContextMI) {
+		debugNextPageMI.setAttribute("checked", checked);
+		debugNextPageContextMI.setAttribute("checked", checked);
+		debugPOSTMI.setAttribute("checked", "false");
+		debugPOSTContextMI.setAttribute("checked", "false");
+		debugAllMI.setAttribute("checked", "false");
+		debugAllContextMI.setAttribute("checked", "false");
+	}
+	if (ActiveMI == debugPOSTMI || ActiveMI == debugPOSTContextMI) {
+		debugNextPageMI.setAttribute("checked", "false");
+		debugNextPageContextMI.setAttribute("checked", "false");
+		debugPOSTMI.setAttribute("checked", checked);
+		debugPOSTContextMI.setAttribute("checked", checked);
+		debugAllMI.setAttribute("checked", "false");
+		debugAllContextMI.setAttribute("checked", "false");
+	}
+	if (ActiveMI == debugAllMI || ActiveMI == debugAllContextMI) {
+		debugNextPageMI.setAttribute("checked", "false");
+		debugNextPageContextMI.setAttribute("checked", "false");
+		debugPOSTMI.setAttribute("checked", "false");
+		debugPOSTContextMI.setAttribute("checked", "false");
+		debugAllMI.setAttribute("checked", checked);
+		debugAllContextMI.setAttribute("checked", checked);
+	}
+	var ZendDebugDropdown = document.getElementById("zendDebugDropdown");
+	var imagesPath = "chrome://zend-debugger-toolbar/content/images/";
+	zendClearDebugCookies();
+	if (checked == "true") {
+		if (ActiveMI.getAttribute("id") == "zendDebugPOST" || ActiveMI.getAttribute("id") == "zendDebugPOST-context") {
+			zendSetZDEDebugMode("POST");
+			ZendDebugDropdown.setAttribute("image", imagesPath + "debugmenu_post.gif");
+		} else if (ActiveMI.getAttribute("id") == "zendDebugAll"
+				|| ActiveMI.getAttribute("id") == "zendDebugAll-context") {
+			zendSetZDEDebugMode("ALL");
+			ZendDebugDropdown.setAttribute("image", imagesPath + "debugmenu_all.gif");
+		} else if (ActiveMI.getAttribute("id") == "zendDebugNextPage"
+				|| ActiveMI.getAttribute("id") == "zendDebugNextPage-context") {
+			zendSetZDEDebugMode("NEXT");
+			ZendDebugDropdown.setAttribute("image", imagesPath + "debugmenu_next.gif");
+		}
+		zendFetchConnectionSettings(zendSetDebugCookies, false, false);
+		zendDebugStatusChanged();
 	} else {
-		zendClearDebugCookies();
+		zendSetZDEDebugMode("");
+		ZendDebugDropdown.setAttribute("image", imagesPath + "debugmenu.gif");
 	}
 }
 
-// add a search term to the drop down.
-function zendAddSearchTerms(searchTerms){
+function zendDebugStatusChanged() {
+	var windowMM = window.messageManager;
+	var zendDebugCookiesMissing = function(message) {
+		windowMM.removeMessageListener("zend-fs-zendDebugCookiesMissing", zendDebugCookiesMissing);
+		zendClearDebugActions();
+	};
+	windowMM.addMessageListener("zend-fs-zendDebugCookiesMissing", zendDebugCookiesMissing);
+	windowMM.broadcastAsyncMessage("zend-cs-zendHandleHasDebugSessionCookies");
+}
+
+function zendClearDebugActions() {
+	var debugNextPageMI = document.getElementById("zendDebugNextPage");
+	var debugPOSTMI = document.getElementById("zendDebugPOST");
+	var debugAllMI = document.getElementById("zendDebugAll");
+	debugNextPageMI.setAttribute("checked", "false");
+	zendDebugChangeStatus(debugNextPageMI);
+	debugPOSTMI.setAttribute("checked", "false");
+	zendDebugChangeStatus(debugPOSTMI);
+	debugAllMI.setAttribute("checked", "false");
+	zendDebugChangeStatus(debugAllMI);
+}
+
+function zendAddSearchTerms(searchTerms) {
 	var zendSearchTerms = document.getElementById("zendSearchTerms");
 	var i;
-
 	var childNodes = zendSearchTerms.firstChild.childNodes;
-	for (i=0; i < childNodes.length; i++) {
+	for (i = 0; i < childNodes.length; i++) {
 		if (childNodes[i].getAttribute("label") == searchTerms) {
 			zendSearchTerms.removeItemAt(i);
 		}
 	}
-
 	zendSearchTerms.insertItemAt(0, searchTerms);
 }
 
-function zendSearch(){
+function zendSearch() {
 	var searchTerms = document.getElementById("zendSearchTerms").value;
-
 	if (searchTerms.length > 0) {
 		zendAddSearchTerms(searchTerms);
 		var terms = searchTerms.split(" ");
-
 		var i;
-		var URL = document.getElementById("zendSearchSites").selectedItem.getAttribute("data");;
-
-		for (i=0; i<terms.length; i++) {
-			URL += encodeURIComponent(terms[i]);
-			if (i != terms.length-1) {
-				URL += "+";
+		var termURL = document.getElementById("zendSearchSites").selectedItem.getAttribute("data");
+		for (i = 0; i < terms.length; i++) {
+			termURL += encodeURIComponent(terms[i]);
+			if (i != terms.length - 1) {
+				termURL += "+";
 			}
 		}
-		zendLoadPage(URL);
+		zendLoadPage(termURL);
 	}
 }
 
-function zendAbout(){
-	window.openDialog("chrome://zend-debugger-toolbar/content/about.xul", "zend-about-dialog", "centerscreen,chrome,modal");
+function zendToggleSearch() {
+	var hidden = "true";
+	if (zendGetZDESearch())
+		hidden = "false";
+	try {
+		document.getElementById("zendSearchBox").setAttribute("hidden", hidden);
+	} catch (e) {
+	}
 }
 
-function zendOpenSettings(){
-	window.openDialog("chrome://zend-debugger-toolbar/content/settings.xul", "Settings", 'chrome,dialog,modal,titlebar');
-
-	zendWindowOnLoad();
+function zendLoadPage(pageURL) {
+	// Send asynchronous call to 'content'
+	var browserMM = gBrowser.selectedBrowser.messageManager;
+	browserMM.sendAsyncMessage("zend-cs-zendHandleLoadPage", {
+		pageURL : pageURL
+	});
 }
 
-function setRightClickMenu(){
-	// if the page contains frames -> show "debug this frame"
-	if ( document.popupNode.ownerDocument != window.content.document )
-		document.getElementById("zendDebugFrame-context").hidden = false;
-	else
-		document.getElementById("zendDebugFrame-context").hidden = true;
+function zendAbout() {
+	window.openDialog("chrome://zend-debugger-toolbar/content/about.xul", "zend-about-dialog",
+			"centerscreen, chrome, modal");
 }
 
-function zendToggleShow(){
+function zendOpenSettings() {
+	window.openDialog("chrome://zend-debugger-toolbar/content/settings.xul", "Settings",
+			'chrome, dialog, modal, titlebar');
+	zendToggleSearch();
+}
+
+function zendToggleShow() {
 	var hide = !document.getElementById("zendShow-context").getAttribute("checked");
-	document.getElementById(myToolbarId).setAttribute("hidden",hide);
+	document.getElementById("zendDebuggerToolbar").setAttribute("hidden", hide);
 }
 
-function zendRunZDE(){
-	var cmd = zendGetZDEPath();
-	try{
-		var targetFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-		targetFile.initWithPath (cmd);
-		var process = Components.classes['@mozilla.org/process/util;1'].getService(Components.interfaces.nsIProcess);
-		process.init (targetFile);
-		process.run (false, [], 0, {});
-		return true;
-	} catch(e) {
-		alert (
-			"Failed to launch the IDE!\n" +
-			"Please check whether the path \"" + cmd + "\" is correct.\n" +
-			"To configure it, go to \"Extra Stuff->Settings\".\n" + e.message
-		);
+function zendRunIDE() {
+	var launcherPath = zendGetZDEPath(true);
+	try {
+		var targetFile = Components.classes['@mozilla.org/file/local;1']
+				.createInstance(Components.interfaces.nsILocalFile);
+		targetFile.initWithPath(launcherPath);
+		var process = Components.classes['@mozilla.org/process/util;1']
+				.createInstance(Components.interfaces.nsIProcess);
+		process.init(targetFile);
+		process.run(false, [], 0, {});
+	} catch (e) {
+		alert("Failed to launch the IDE!\n" + "Please check whether the path \"" + launcherPath + "\" is correct.\n"
+				+ "To configure it, go to \"Extra Stuff->Settings\".\n");
 	}
-	return false;
+}
+
+function zendFetchConnectionSettings(callback) {
+	var callbackArgs = Array.prototype.slice.call(arguments, 1);
+	var connectionProps = new Map();
+	// Use user specified settings
+	if (!zendGetZDEAutodetect()) {
+		connectionProps.set("dbg-host", zendGetZDEIP(true));
+		connectionProps.set("dbg-port", zendGetZDEPort());
+		connectionProps.set("dbg-use-ssl", zendGetZDEUseSSL());
+		connectionProps.set("dbg-fast-file", false);
+		connectionProps.set("dbg-protocol", null);
+		connectionProps.set("dbg-valid", true);
+		callbackArgs.push(connectionProps)
+		// Trigger callback immediately and return
+		callback.apply(null, callbackArgs);
+		return;
+	}
+	// Use settings auto-detection
+	var url = "http://127.0.0.1:" + zendGetZDEAutodetectPort();
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4) {
+			if (this.status != 200) {
+				if (confirm("Could not automatically detect debug connection settings at port: "
+						+ zendGetZDEAutodetectPort()
+						+ "\n\nIDE is not running or does not support debug connection settings auto-detection.\n"
+						+ "Would you like to launch the IDE?")) {
+					zendRunIDE();
+				}
+				connectionProps.set("dbg-valid", false);
+				callbackArgs.push(connectionProps)
+				// Trigger callback
+				callback.apply(null, callbackArgs);
+				return;
+			}
+			var settingsArray = this.responseText.split("&");
+			var i;
+			for (i = 0; i < settingsArray.length; i++) {
+				// Ignore setting that are not in the format of 'key=value'
+				if (settingsArray[i].indexOf("=") == -1)
+					continue;
+				// Detect debug_port, debug_host, use_ssl and debug_fastfile settings
+				var setting = settingsArray[i].split("=");
+				if (setting[0] == "debug_port")
+					connectionProps.set("dbg-port", setting[1]);
+				else if (setting[0] == "debug_host")
+					connectionProps.set("dbg-host", setting[1]);
+				else if (setting[0] == "use_ssl")
+					connectionProps.set("dbg-use-ssl", setting[1]);
+				else if (setting[0] == "debug_fastfile")
+					connectionProps.set("dbg-fast-file", setting[1]);
+				else if (setting[0] == "debug_protocol")
+					connectionProps.set("dbg-protocol", setting[1]);
+			}
+			if (connectionProps.get("dbg-host") == null || connectionProps.get("dbg-port") == null) {
+				alert("Could not automatically detect debug connection settings at port: " + zendGetZDEAutodetectPort());
+				connectionProps.set("dbg-valid", false);
+			} else {
+				connectionProps.set("dbg-valid", true);
+			}
+			callbackArgs.push(connectionProps)
+			// Trigger callback
+			callback.apply(null, callbackArgs);
+		}
+	};
+	xhttp.open("GET", url, true);
+	xhttp.send();
 }

@@ -5,16 +5,18 @@
             em:description="Provides integration with Zend debugging and profiling tools. If you would like to contribute, please visit the project home page: https://github.com/zendtech/zend-debugger-firefox"
             em:creator="Zend Technologies Ltd"
             em:homepageURL="https://github.com/zendtech/zend-debugger-firefox"
-            em:version="2.8.2"
+            em:version="3.0.0"
             em:id="{196e8f80-aa9f-400c-83fc-ea57460d4539}"
+            em:type="2"
+            em:multiprocessCompatible="true"
             em:iconURL="chrome://zend-debugger-toolbar/content/images/zde_icon32.png"
             em:optionsURL="chrome://zend-debugger-toolbar/content/settings.xul"
             em:aboutURL="chrome://zend-debugger-toolbar/content/about.xul">
         <em:targetApplication>
             <Description>
                 <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-                <em:minVersion>1.5</em:minVersion>
-                <em:maxVersion>50.*</em:maxVersion>
+                <em:minVersion>42.0</em:minVersion>
+                <em:maxVersion>*</em:maxVersion>
             </Description>
         </em:targetApplication>
     </Description>
