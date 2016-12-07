@@ -6,6 +6,12 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
+/**
+ * Handles message responsible for setting debug cookies.
+ * 
+ * @param message
+ *            message data
+ */
 function zendHandleDebugCookies(message) {
 	var selectFrame = message.data.selectFrame;
 	var triggerSession = message.data.triggerSession;
@@ -20,25 +26,46 @@ function zendHandleDebugCookies(message) {
 	}
 }
 
+/**
+ * Handles message responsible for loading page via provided URL.
+ * 
+ * @param message
+ *            message data
+ */
 function zendHandleLoadPage(message) {
 	var pageURL = message.data.pageURL;
 	content.document.location.href = pageURL;
 }
 
-function zendHandleCookiesEnabled() {
+/**
+ * Handles message responsible for checking if cookies are enabled.
+ * 
+ * @param message
+ *            message data
+ */
+function zendHandleCookiesEnabled(message) {
 	var doc = content.document;
 	zendCheckCookiesEnabled(doc);
 }
 
-function zendHandleHasDebugSessionCookies() {
+/**
+ * Handles message responsible for checking if debug cookies are available.
+ * 
+ * @param message
+ *            message data
+ */
+function zendHandleHasDebugSessionCookies(message) {
 	var pageLoadListener = function(event) {
 		var doc = event.originalTarget;
-	    var win = doc.defaultView;
-	    if (doc.nodeName != "#document") return;
-	    if (win != win.top) return;
-	    if (win.frameElement) return;
-	    // Check if session cookies were removed
-	    var doc = content.document;
+		var win = doc.defaultView;
+		if (doc.nodeName != "#document")
+			return;
+		if (win != win.top)
+			return;
+		if (win.frameElement)
+			return;
+		// Check if session cookies were removed
+		var doc = content.document;
 		var cookies = doc.cookie.split(";");
 		if (doc.cookie.indexOf('ZendDebuggerCookie') == -1 || doc.cookie.indexOf('ZendDebuggerCookie=;') != -1) {
 			sendAsyncMessage("zend-fs-zendDebugCookiesMissing");
@@ -48,6 +75,16 @@ function zendHandleHasDebugSessionCookies() {
 	addEventListener("DOMContentLoaded", pageLoadListener, false);
 }
 
+/**
+ * Retrieves frames available in current tab and gives user possibility to
+ * choose the frame that should be debugged.
+ * 
+ * @param cookies
+ *            debug cookies to be set
+ * @param triggerSession
+ *            if <code>true</code> page will be reloaded causing debug session
+ *            to be triggered
+ */
 function zendFetchFrames(cookies, triggerSession) {
 	var frames = content.frames;
 	var frameNames = new Array();
@@ -58,8 +95,11 @@ function zendFetchFrames(cookies, triggerSession) {
 	var i;
 	for (i = 0; i < frames.length; i++) {
 		var frameName = frames[i].name;
-		if (frameName == null || frameName == "") {
+		if (frameName == null || frameName.trim() == "") {
 			frameName = frames[i].location.pathname;
+		}
+		if (frameName == null || frameName.trim() == "") {
+			continue;
 		}
 		if (framesMap.get(frameName) == null) {
 			frameNames.push(frameName);
@@ -82,22 +122,42 @@ function zendFetchFrames(cookies, triggerSession) {
 			doc.location.reload();
 		}
 	};
-	
+
 	addMessageListener("zend-cs-zendHandleSelectedFrame", zendHandleSelectedFrame);
 	// Let user choose a frame...
-	sendAsyncMessage("zend-fs-zendSelectFrame", { frameNames : frameNames });
+	sendAsyncMessage("zend-fs-zendSelectFrame", {
+		frameNames : frameNames
+	});
 }
 
+/**
+ * Checks if cookies are enabled.
+ * 
+ * @param doc
+ *            current document
+ */
 function zendCheckCookiesEnabled(doc) {
 	doc.cookie = '__test__cookie__=1';
 	if (doc.cookie.indexOf('__test__cookie__') != -1) {
 		doc.cookie = "__test__cookie__=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-		sendAsyncMessage("zend-fs-zendCheckCookiesEnabled", { enabled : true });
+		sendAsyncMessage("zend-fs-zendCheckCookiesEnabled", {
+			enabled : true
+		});
 	} else {
-		sendAsyncMessage("zend-fs-zendCheckCookiesEnabled", { enabled : false });
+		sendAsyncMessage("zend-fs-zendCheckCookiesEnabled", {
+			enabled : false
+		});
 	}
 }
 
+/**
+ * Sets debug cookies for given document.
+ * 
+ * @param doc
+ *            document which debug cookies should be set for
+ * @param cookies
+ *            debug cookies array
+ */
 function zendSetDebugCookies(doc, cookies) {
 	doc.cookie = "original_url=" + doc.location + "; expires=0; path=/";
 	var i;
@@ -106,6 +166,7 @@ function zendSetDebugCookies(doc, cookies) {
 	}
 }
 
+// Message listeners
 addMessageListener("zend-cs-zendHandleDebugCookies", zendHandleDebugCookies);
 addMessageListener("zend-cs-zendHandleLoadPage", zendHandleLoadPage);
 addMessageListener("zend-cs-zendHandleCookiesEnabled", zendHandleCookiesEnabled);

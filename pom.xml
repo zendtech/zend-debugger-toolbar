@@ -5,7 +5,7 @@
     <groupId>zend.com</groupId>
     <artifactId>zend-debugger-firefox</artifactId>
     <packaging>pom</packaging>
-    <version>3.0b1</version>
+    <version>3.0</version>
     <name>ZendDebuggerFirefox</name>
     <properties>
         <tmp-dir>${project.build.directory}/tmp</tmp-dir>

@@ -6,6 +6,12 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
+/**
+ * Populates pull-down list with available frame names.
+ * 
+ * @param frameNames
+ *            available frame names
+ */
 function zendPopulateFrames(frameNames) {
 	var i;
 	framesPulldown = document.getElementById("zendFrames");
@@ -15,6 +21,9 @@ function zendPopulateFrames(frameNames) {
 	framesPulldown.selectedIndex = 0;
 }
 
+/**
+ * Saves user choice.
+ */
 function zendSaveResult() {
 	var selectedIndex = document.getElementById("zendFrames").selectedIndex;
 	var result = window.arguments[0][selectedIndex];

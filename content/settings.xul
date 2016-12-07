@@ -33,14 +33,6 @@
 			<spacer flex="1"/>
 			<textbox id="zendSettingsAutodetectPort"/>
 		</hbox>
-		<hbox>
-			<separator orient="vertical"/>
-			<label value="IDE Launcher" id="zendSettingsIDELauncherLbl"/><spacer flex="1"/><textbox id="zendSettingsIDELauncherPath"/>
-			<button label="Browse"
-				onclick="zendSetZDEPath();"
-				tooltiptext="Browse for IDE executable"
-				id="zendSettingsIDELauncherBtn"/>
-		</hbox>
 		<radio label="Manual Settings" id="zendSettingsManual" command="cmd_zendToggleAutoDetect"/>
 		<hbox>
 			<separator orient="vertical"/>

@@ -6,6 +6,7 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
+// Initialize defaults, load frames script, etc.
 (function() {
 	zendSetZDEDebugMode("");
 	zendDetectIPs();
@@ -13,7 +14,10 @@
 	windowMM.loadFrameScript("chrome://zend-debugger-toolbar/content/handlers.js", true);
 })();
 
-const zendHTTPResponseObserver = {
+/**
+ * HTTP response observer responsible for reporting Zend debugger client errors.
+ */
+var zendHTTPResponseObserver = {
 	observe: function(subject, topic, data) {
 		try {
 			this.unregister();
@@ -37,6 +41,9 @@ const zendHTTPResponseObserver = {
 	}
 }
 
+/**
+ * Checks if cookies are enabled in the browser.
+ */
 function zendCheckCookiesEnabled() {
 	// Send asynchronous call to 'content'
 	var browserMM = gBrowser.selectedBrowser.messageManager;
@@ -47,9 +54,12 @@ function zendCheckCookiesEnabled() {
 		browserMM.removeMessageListener("zend-fs-zendCheckCookiesEnabled", messageListener);
 	};
 	browserMM.addMessageListener("zend-fs-zendCheckCookiesEnabled", messageListener);
-	browserMM.sendAsyncMessage("zend-cs-zendHandleCookiesEnabled");
+	browserMM.sendAsyncMessage("zend-cs-zendHandleCookiesEnabled", {});
 }
 
+/**
+ * Clears all possible debug cookies.
+ */
 function zendClearDebugCookies() {
 	var cookies = new Array();
 	var cookieSuffix = "; expires=Sat, 12 Feb 2000 01:00:00 UTC; path=/";
@@ -82,6 +92,18 @@ function zendClearDebugCookies() {
 	});
 }
 
+/**
+ * Sets debug cookies.
+ * 
+ * @param isProfiling
+ *            if <code>true</code> profile session cookies will be set, if
+ *            <code>false</code> then debug session cookies will be set
+ * @param triggerSession
+ *            if <code>true</code> then page will be reloaded to trigger
+ *            debug/profile session
+ * @param connectionProps
+ *            connection properties to create the appropriate cookies data from
+ */
 function zendSetDebugCookies(isProfiling, triggerSession, connectionProps) {
 	zendCheckCookiesEnabled();
 	var cookies = new Array();
@@ -136,7 +158,13 @@ function zendSetDebugCookies(isProfiling, triggerSession, connectionProps) {
 	});
 }
 
+/**
+ * 'Debug' action handler.
+ */
 function zendDebug() {
+	if (document.getElementById("zendDebug").disabled) {
+		return;
+	}
 	zendToggleDebugAndProfile(true);
 	zendFetchConnectionSettings(function(connectionProps) {
 		if (connectionProps.get("dbg-valid")) {
@@ -146,7 +174,13 @@ function zendDebug() {
 	});
 }
 
+/**
+ * 'Profile' action handler.
+ */
 function zendProfile() {
+	if (document.getElementById("zendProfile").disabled) {
+		return;
+	}
 	zendClearDebugActions();
 	zendToggleDebugAndProfile(true);
 	zendFetchConnectionSettings(function(connectionProps) {
@@ -157,12 +191,24 @@ function zendProfile() {
 	});
 }
 
+/**
+ * Disables/enables buttons for starting debug/profile session.
+ * 
+ * @param disable
+ *            if <code>true</code> then buttons will be disabled
+ */
 function zendToggleDebugAndProfile(disable) {
 	document.getElementById("zendDebug").disabled = disable;
 	document.getElementById("zendDebugDropdown").disabled = disable;
 	document.getElementById("zendProfile").disabled = disable;
 }
 
+/**
+ * Asks user to choose the frame that should be debugged/profiled.
+ * 
+ * @param message
+ *            message data with the list of available frames
+ */
 function zendSelectFrame(message) {
 	var frameNames = message.data.frameNames;
 	var result = new Array();
@@ -180,6 +226,13 @@ function zendSelectFrame(message) {
 	});
 }
 
+/**
+ * Sets up debug mode menu elements status and presentation with the use of
+ * provided element that is marked as currently active.
+ * 
+ * @param ActiveMI
+ *            active menu element
+ */
 function zendDebugChangeStatus(ActiveMI) {
 	var debugNextPageMI = document.getElementById("zendDebugNextPage");
 	var debugNextPageContextMI = document.getElementById("zendDebugNextPage-context");
@@ -236,6 +289,9 @@ function zendDebugChangeStatus(ActiveMI) {
 	}
 }
 
+/**
+ * Notifies message listeners about debug mode change.
+ */
 function zendDebugStatusChanged() {
 	var windowMM = window.messageManager;
 	var zendDebugCookiesMissing = function(message) {
@@ -243,9 +299,12 @@ function zendDebugStatusChanged() {
 		zendClearDebugActions();
 	};
 	windowMM.addMessageListener("zend-fs-zendDebugCookiesMissing", zendDebugCookiesMissing);
-	windowMM.broadcastAsyncMessage("zend-cs-zendHandleHasDebugSessionCookies");
+	windowMM.broadcastAsyncMessage("zend-cs-zendHandleHasDebugSessionCookies", {});
 }
 
+/**
+ * Clears debug mode actions state.
+ */
 function zendClearDebugActions() {
 	var debugNextPageMI = document.getElementById("zendDebugNextPage");
 	var debugPOSTMI = document.getElementById("zendDebugPOST");
@@ -258,6 +317,12 @@ function zendClearDebugActions() {
 	zendDebugChangeStatus(debugAllMI);
 }
 
+/**
+ * Adds search terms.
+ * 
+ * @param searchTerms
+ *            search terms to be added
+ */
 function zendAddSearchTerms(searchTerms) {
 	var zendSearchTerms = document.getElementById("zendSearchTerms");
 	var i;
@@ -270,6 +335,9 @@ function zendAddSearchTerms(searchTerms) {
 	zendSearchTerms.insertItemAt(0, searchTerms);
 }
 
+/**
+ * Performs search with the use of provide search terms.
+ */
 function zendSearch() {
 	var searchTerms = document.getElementById("zendSearchTerms").value;
 	if (searchTerms.length > 0) {
@@ -287,16 +355,12 @@ function zendSearch() {
 	}
 }
 
-function zendToggleSearch() {
-	var hidden = "true";
-	if (zendGetZDESearch())
-		hidden = "false";
-	try {
-		document.getElementById("zendSearchBox").setAttribute("hidden", hidden);
-	} catch (e) {
-	}
-}
-
+/**
+ * Opens provided page URL.
+ * 
+ * @param pageURL
+ *            page URL to be opened
+ */
 function zendLoadPage(pageURL) {
 	// Send asynchronous call to 'content'
 	var browserMM = gBrowser.selectedBrowser.messageManager;
@@ -305,38 +369,43 @@ function zendLoadPage(pageURL) {
 	});
 }
 
+/**
+ * Opens 'About' dialog.
+ */
 function zendAbout() {
 	window.openDialog("chrome://zend-debugger-toolbar/content/about.xul", "zend-about-dialog",
 			"centerscreen, chrome, modal");
 }
 
+/**
+ * Opens 'Settings' dialog.
+ */
 function zendOpenSettings() {
 	window.openDialog("chrome://zend-debugger-toolbar/content/settings.xul", "Settings",
 			'chrome, dialog, modal, titlebar');
-	zendToggleSearch();
+	var hideSearch = "true";
+	if (zendGetZDESearch())
+		hideSearch = "false";
+	try {
+		document.getElementById("zendSearchBox").setAttribute("hidden", hideSearch);
+	} catch (e) {
+	}
 }
 
+/**
+ * Hides/shows Zend debugger toolbar.
+ */
 function zendToggleShow() {
 	var hide = !document.getElementById("zendShow-context").getAttribute("checked");
 	document.getElementById("zendDebuggerToolbar").setAttribute("hidden", hide);
 }
 
-function zendRunIDE() {
-	var launcherPath = zendGetZDEPath(true);
-	try {
-		var targetFile = Components.classes['@mozilla.org/file/local;1']
-				.createInstance(Components.interfaces.nsILocalFile);
-		targetFile.initWithPath(launcherPath);
-		var process = Components.classes['@mozilla.org/process/util;1']
-				.createInstance(Components.interfaces.nsIProcess);
-		process.init(targetFile);
-		process.run(false, [], 0, {});
-	} catch (e) {
-		alert("Failed to launch the IDE!\n" + "Please check whether the path \"" + launcherPath + "\" is correct.\n"
-				+ "To configure it, go to \"Extra Stuff->Settings\".\n");
-	}
-}
-
+/**
+ * Retrieves debug connection settings and triggers provided callback function.
+ * 
+ * @param callback
+ *            callback function
+ */
 function zendFetchConnectionSettings(callback) {
 	var callbackArgs = Array.prototype.slice.call(arguments, 1);
 	var connectionProps = new Map();
@@ -359,14 +428,10 @@ function zendFetchConnectionSettings(callback) {
 	xhttp.onreadystatechange = function() {
 		if (this.readyState == 4) {
 			if (this.status != 200) {
-				if (confirm("Could not automatically detect debug connection settings at port: "
-						+ zendGetZDEAutodetectPort()
-						+ "\n\nIDE is not running or does not support debug connection settings auto-detection.\n"
-						+ "Would you like to launch the IDE?")) {
-					zendRunIDE();
-				}
+				alert("Cannot detect IDE settings at port: "
+						+ zendGetZDEAutodetectPort());
 				connectionProps.set("dbg-valid", false);
-				callbackArgs.push(connectionProps)
+				callbackArgs.push(connectionProps);
 				// Trigger callback
 				callback.apply(null, callbackArgs);
 				return;
@@ -377,7 +442,8 @@ function zendFetchConnectionSettings(callback) {
 				// Ignore setting that are not in the format of 'key=value'
 				if (settingsArray[i].indexOf("=") == -1)
 					continue;
-				// Detect debug_port, debug_host, use_ssl and debug_fastfile settings
+				// Detect debug_port, debug_host, use_ssl and debug_fastfile
+				// settings
 				var setting = settingsArray[i].split("=");
 				if (setting[0] == "debug_port")
 					connectionProps.set("dbg-port", setting[1]);
@@ -391,7 +457,8 @@ function zendFetchConnectionSettings(callback) {
 					connectionProps.set("dbg-protocol", setting[1]);
 			}
 			if (connectionProps.get("dbg-host") == null || connectionProps.get("dbg-port") == null) {
-				alert("Could not automatically detect debug connection settings at port: " + zendGetZDEAutodetectPort());
+				alert("Cannot detect IDE settings at port: "
+						+ zendGetZDEAutodetectPort());
 				connectionProps.set("dbg-valid", false);
 			} else {
 				connectionProps.set("dbg-valid", true);

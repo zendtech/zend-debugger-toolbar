@@ -5,7 +5,7 @@
             em:description="Provides integration with Zend debugging and profiling tools. If you would like to contribute, please visit the project home page: https://github.com/zendtech/zend-debugger-firefox"
             em:creator="Zend Technologies Ltd"
             em:homepageURL="https://github.com/zendtech/zend-debugger-firefox"
-            em:version="3.0b1"
+            em:version="3.0"
             em:id="{714BDBD0-7E3A-11E6-86F1-66A48202D2A8}"
             em:type="2"
             em:multiprocessCompatible="true"
