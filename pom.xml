@@ -26,6 +26,8 @@
                                         includes="content/**" />
                                     <fileset dir="${project.basedir}"
                                         includes="defaults/**" />
+                                    <fileset dir="${project.basedir}"
+                                        includes="locale/**" />
                                     <fileset dir="${project.basedir}">
                                         <include name="chrome.manifest" />
                                         <include name="install.rdf" />

@@ -1,0 +1,32 @@
+<!ENTITY label.zend_debugger_toolbar "Zend Debugger Toolbar">
+<!ENTITY label.zend_debugger "Zend Debugger">
+<!ENTITY label.popup_item.debug_current_page "Debug Current Page">
+<!ENTITY label.popup_item.debug_next_page "Debug Next Page">
+<!ENTITY label.popup_item.debug_all_forms "Debug All Forms (POST)">
+<!ENTITY label.popup_item.debug_all_pages "Debug All Pages">
+<!ENTITY label.popup_item.profile "Profile">
+<!ENTITY label.debug "Debug">
+<!ENTITY label.menu_item.debug_current_page "Debug Current Page">
+<!ENTITY label.menu_item.debug_next_page "Debug Next Page">
+<!ENTITY label.menu_item.debug_all_forms "Debug All Forms (POST)">
+<!ENTITY label.menu_item.debug_all_pages "Debug All Pages">
+<!ENTITY label.profile "Profile">
+<!ENTITY label.extra_stuff "Extra Stuff ">
+<!ENTITY label.menu_item.settings "Settings">
+<!ENTITY label.menu_item.zend_sites "Zend.com Sites">
+<!ENTITY label.menu_item.zend_products "Zend Products">
+<!ENTITY label.menu_item.php_education "PHP Education">
+<!ENTITY label.menu_item.get_support "Get Support">
+<!ENTITY label.menu_item.consulting_services "Consulting Services">
+<!ENTITY label.menu_item.certification "Certification">
+<!ENTITY label.menu_item.online_training "Online Training">
+<!ENTITY label.menu_item.training_partners "Training Partners">
+<!ENTITY label.menu_item.about "About">
+<!ENTITY label.search_for_php_info "Search for PHP information:">
+<!ENTITY label.on " on ">
+<!ENTITY label.go "GO">
+<!ENTITY tooltip.go "Search for PHP information">
+<!ENTITY tooltip.debug "Debug Current Page">
+<!ENTITY tooltip.debug_menu "Debug Options">
+<!ENTITY tooltip.profile "Profile current page">
+<!ENTITY tooltip.extra_stuff "Extra Stuff">

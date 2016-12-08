@@ -1,0 +1,6 @@
+<!ENTITY title.dialog "Frame Selection">
+<!ENTITY label.select_frame_to_debug "Select the frame you would like to debug/profile:">
+<!ENTITY label.authors_title "Author(s)">
+<!ENTITY label.authors_description "Zend Technologies Ltd - Initial API and implementation">
+<!ENTITY label.project_page "Project Page">
+<!ENTITY label.home_page "Zend Home Page">

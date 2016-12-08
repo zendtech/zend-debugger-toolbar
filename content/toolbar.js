@@ -6,13 +6,20 @@
  * Contributor(s): Zend Technologies - initial API and implementation
  ******************************************************************************/
 
-// Initialize defaults, load frames script, etc.
-(function() {
-	zendSetZDEDebugMode("");
-	zendDetectIPs();
-	var windowMM = window.messageManager;
-	windowMM.loadFrameScript("chrome://zend-debugger-toolbar/content/handlers.js", true);
-})();
+/**
+ * Array with host IPs.
+ */
+var zendDetectedIPs = [ "127.0.0.1" ];
+/**
+ * DNS lookup listener.
+ */
+var zendOnDNSLookupListener = {
+	onLookupComplete : function(request, record, status) {
+		while (record.hasMore()) {
+			zendDetectedIPs.push(record.getNextAddrAsString());
+		}
+	}
+};
 
 /**
  * HTTP response observer responsible for reporting Zend debugger client errors.
@@ -24,7 +31,10 @@ var zendHTTPResponseObserver = {
 			var http = subject.QueryInterface(Components.interfaces.nsIHttpChannel);
 			var header = http.getResponseHeader("X-Zend-Debug-Server");
 			if (header) {
-				if (header != "OK") alert("IDE client error:\n" + header);
+				if (header != "OK") {
+					var stringsBundle = document.getElementById("zdt-toolbar-messages");
+					alert(stringsBundle.getString('messageIDEClientError') + header);
+				}
 			}
 		} catch(e) {
 			// ignore
@@ -39,7 +49,15 @@ var zendHTTPResponseObserver = {
 	unregister: function(){
 		this.observerService.removeObserver(this, "http-on-examine-response");
 	}
-}
+};
+
+// Initialize defaults, load frames script, etc.
+(function() {
+	zendSetZDEDebugMode("");
+	zendDetectIPs();
+	var windowMM = window.messageManager;
+	windowMM.loadFrameScript("chrome://zend-debugger-toolbar/content/handlers.js", true);
+})();
 
 /**
  * Checks if cookies are enabled in the browser.
@@ -49,7 +67,8 @@ function zendCheckCookiesEnabled() {
 	var browserMM = gBrowser.selectedBrowser.messageManager;
 	var messageListener = function(message) {
 		if (!message.data.enabled) {
-			alert("To use the Zend Debugger toolbar, enable cookie support in your browser.");
+			var stringsBundle = document.getElementById("zdt-toolbar-messages");
+			alert(stringsBundle.getString('messageEnableCookiesSupport'));
 		}
 		browserMM.removeMessageListener("zend-fs-zendCheckCookiesEnabled", messageListener);
 	};
@@ -401,6 +420,36 @@ function zendToggleShow() {
 }
 
 /**
+ * Detects host IP(s) with the use of DNS service.
+ */
+function zendDetectIPs() {
+	var dnsService = Components.classes["@mozilla.org/network/dns-service;1"]
+			.getService(Components.interfaces.nsIDNSService);
+	if (dnsService != null) {
+		dnsService.asyncResolve(dnsService.myHostName, dnsService.RESOLVE_DISABLE_IPV6, zendOnDNSLookupListener, null);
+	}
+}
+
+function zendGetClientIP() {
+	var ip = zendGetZDEIP();
+	if (ip == "" || ip == null) {
+		var stringsBundle = document.getElementById("zdt-toolbar-messages");
+		var message = stringsBundle.getString('messageEnterClientIP') + "\n";
+		if (zendDetectedIPs.length > 0) {
+			message += "\n" + stringsBundle.getString('messageFollowingIPsDetected') + "\n\n";
+			var i;
+			for (i = 0; i < zendDetectedIPs.length; i++) {
+				message += "\u2022 " + zendDetectedIPs[i] + "\n";
+			}
+			message += "\n";
+		}
+		ip = prompt(message, "");
+		zendGetZDEPrefs().setCharPref("debugHost", ip);
+	}
+	return ip;
+}
+
+/**
  * Retrieves debug connection settings and triggers provided callback function.
  * 
  * @param callback
@@ -411,7 +460,7 @@ function zendFetchConnectionSettings(callback) {
 	var connectionProps = new Map();
 	// Use user specified settings
 	if (!zendGetZDEAutodetect()) {
-		connectionProps.set("dbg-host", zendGetZDEIP(true));
+		connectionProps.set("dbg-host", zendGetClientIP());
 		connectionProps.set("dbg-port", zendGetZDEPort());
 		connectionProps.set("dbg-use-ssl", zendGetZDEUseSSL());
 		connectionProps.set("dbg-fast-file", false);
@@ -427,9 +476,10 @@ function zendFetchConnectionSettings(callback) {
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (this.readyState == 4) {
+			var stringsBundle = document.getElementById("zdt-toolbar-messages");
 			if (this.status != 200) {
-				alert("Cannot detect IDE settings at port: "
-						+ zendGetZDEAutodetectPort());
+				alert(stringsBundle.getString('messageCannotDetectIDESettings') 
+						+ ' ' + zendGetZDEAutodetectPort());
 				connectionProps.set("dbg-valid", false);
 				callbackArgs.push(connectionProps);
 				// Trigger callback
@@ -457,8 +507,8 @@ function zendFetchConnectionSettings(callback) {
 					connectionProps.set("dbg-protocol", setting[1]);
 			}
 			if (connectionProps.get("dbg-host") == null || connectionProps.get("dbg-port") == null) {
-				alert("Cannot detect IDE settings at port: "
-						+ zendGetZDEAutodetectPort());
+				alert(stringsBundle.getString('messageCannotDetectIDESettings') 
+						+ ' ' + zendGetZDEAutodetectPort());
 				connectionProps.set("dbg-valid", false);
 			} else {
 				connectionProps.set("dbg-valid", true);

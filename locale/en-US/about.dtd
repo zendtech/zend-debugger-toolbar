@@ -1,0 +1,6 @@
+<!ENTITY title.dialog "About Zend Debugger Toolbar">
+<!ENTITY label.zend_debugger_toolbar "Zend Debugger Toolbar">
+<!ENTITY label.authors_title "Author(s)">
+<!ENTITY label.authors_description "Zend Technologies Ltd - Initial API and implementation">
+<!ENTITY label.project_page "Project Page">
+<!ENTITY label.home_page "Zend Home Page">

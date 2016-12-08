@@ -7,21 +7,6 @@
  ******************************************************************************/
 
 /**
- * Array with host IPs.
- */
-var zendDetectedIPs = [ "127.0.0.1" ];
-/**
- * DNS lookup listener.
- */
-var zendOnDNSLookupListener = {
-	onLookupComplete : function(request, record, status) {
-		while (record.hasMore()) {
-			zendDetectedIPs.push(record.getNextAddrAsString());
-		}
-	}
-};
-
-/**
  * Returns preference branch related to Zend Debugger Toolbar settings.
  * 
  * @returns preference branch related to Zend Debugger Toolbar settings
@@ -115,30 +100,10 @@ function zendGetZDEEnableFrameSelect() {
 /**
  * Returns 'debugHost' IP preference value.
  * 
- * @param ask
- *            if <code>true</code>, a prompt message dialog for providing IP
- *            value will be shown if related preference has no value.
  * @returns debug host IP preference value
  */
-function zendGetZDEIP(ask) {
-	var ip = zendGetZDEPrefs().getCharPref("debugHost");
-	if (!ask) {
-		return ip;
-	}
-	if (ip == "" || ip == null) {
-		var message = "Please enter the Zend Debugger client IP address.\n";
-		if (zendDetectedIPs.length > 0) {
-			message += "\nThe following IP addresses have been detected:\n\n";
-			var i;
-			for (i = 0; i < zendDetectedIPs.length; i++) {
-				message += "\u2022 " + zendDetectedIPs[i] + "\n";
-			}
-			message += "\n";
-		}
-		ip = prompt(message, "");
-	}
-	zendGetZDEPrefs().setCharPref("debugHost", ip);
-	return ip;
+function zendGetZDEIP() {
+	return zendGetZDEPrefs().getCharPref("debugHost");
 }
 
 /**
@@ -162,7 +127,7 @@ function zendLoadSettings() {
 	document.getElementById("zendSettingsFirstLine").checked = zendGetZDEFirstLine();
 	document.getElementById("zendSettingsEnableFrameSelect").checked = zendGetZDEEnableFrameSelect();
 	document.getElementById("zendSettingsAutodetectPort").value = zendGetZDEAutodetectPort();
-	document.getElementById("zendSettingsIP").value = zendGetZDEIP(false);
+	document.getElementById("zendSettingsIP").value = zendGetZDEIP();
 	document.getElementById("zendSettingsPort").value = zendGetZDEPort();
 	document.getElementById("zendSettingsUseSSL").checked = zendGetZDEUseSSL();
 	if (zendGetZDEAutodetect())
@@ -187,17 +152,6 @@ function zendSaveSettings() {
 	prefs.setCharPref("debugHost", document.getElementById("zendSettingsIP").value);
 	prefs.setCharPref("debugPort", document.getElementById("zendSettingsPort").value);
 	prefs.setBoolPref("useSSL", document.getElementById("zendSettingsUseSSL").checked);
-}
-
-/**
- * Detects host IP(s) with the use of DNS service.
- */
-function zendDetectIPs() {
-	var dnsService = Components.classes["@mozilla.org/network/dns-service;1"]
-			.getService(Components.interfaces.nsIDNSService);
-	if (dnsService != null) {
-		dnsService.asyncResolve(dnsService.myHostName, dnsService.RESOLVE_DISABLE_IPV6, zendOnDNSLookupListener, null);
-	}
 }
 
 /**
@@ -228,21 +182,28 @@ function zendTestAutoDetect() {
 	if (document.getElementById("zendSettingsAutodetectTest").disabled) {
 		return;
 	}
-	var ZDE_Autodetect = zendGetZDEAutodetect();
-	var ZDE_BroadcastPort = zendGetZDEAutodetectPort();
-	var prefs = zendGetZDEPrefs();
-	// Save current auto-detect preferences for the test time
-	prefs.setBoolPref("autodetectSettings", true);
-	prefs.setCharPref("autodetectPort", document.getElementById("zendSettingsAutodetectPort").value);
 	document.getElementById("zendSettingsAutodetectTest").disabled = true;
-	zendFetchConnectionSettings(function(connectionProps) {
-		// Show success message here, failures are handled in callback owner
-		if (connectionProps.get("dbg-valid")) {
-			alert("Success!\n\nDebug connection settings can be automatically detected.");
+	var broadcastPort = document.getElementById("zendSettingsAutodetectPort").value;
+	var url = "http://127.0.0.1:" + broadcastPort;
+	var stringsBundle = document.getElementById("zdt-settings-messages");
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4) {
+			document.getElementById("zendSettingsAutodetectTest").disabled = false;
+			if (this.status != 200) {
+				alert(stringsBundle.getString('messageConnectionTestFailure') + ' ' + broadcastPort);
+				return;
+			}
+			if (this.responseText != null) {
+				var response = this.responseText;
+				if (response.includes("debug_port") && response.includes("debug_host")) {
+					alert(stringsBundle.getString('messageConnectionTestSuccess') + ' ' + broadcastPort);
+					return;
+				}
+			}
+			alert(stringsBundle.getString('messageConnectionTestFailure') + ' ' + broadcastPort);
 		}
-		document.getElementById("zendSettingsAutodetectTest").disabled = false;
-		// Bring back auto-detect preferences
-		prefs.setBoolPref("autodetectSettings", ZDE_Autodetect);
-		prefs.setCharPref("autodetectPort", ZDE_BroadcastPort);
-	});
+	};
+	xhttp.open("GET", url, true);
+	xhttp.send();
 }
