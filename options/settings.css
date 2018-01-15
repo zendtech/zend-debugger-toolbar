@@ -1,0 +1,19 @@
+#local_copy, #break_first_line, #frame_selection {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+th, td {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+label.disabled {
+    color: #828282;
+}
+
+#test_result {
+    font-style: italic;
+}

@@ -1,0 +1,38 @@
+{
+
+  "description": "Provides integration with Zend debugging and profiling tools.",
+  "manifest_version": 2,
+  "name": "Zend Debugger Toolbar",
+  "version": "4.0",
+  "homepage_url": "https://github.com/zendtech/zend-debugger-firefox",
+  "icons": {
+    "16": "icons/zde_icon16.png",
+    "32": "icons/zde_icon32.png",
+    "48": "icons/zde_icon48.png",
+    "64": "icons/zde_icon64.png"
+  },
+
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "cookies",
+    "webRequest",
+    "<all_urls>"
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "browser_action": {
+    "default_icon": "icons/debugmenu.gif",
+    "default_title": "Debug with Zend Debugger",
+    "default_popup": "popup/menu.html"
+  },
+
+  "options_ui": {
+    "page": "options/settings.html"
+  }
+
+}

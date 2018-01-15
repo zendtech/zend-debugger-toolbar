@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="settings.css"/>
+</head>
+<body>
+    <form>
+        <fieldset>
+            <legend>Debug Session Settings</legend>
+            <label><input type="checkbox" id="local_copy">Debug local copy (if available)</label><br>
+            <label><input type="checkbox" id="break_first_line">Break at first line</label><br>
+            <label><input type="checkbox" id="frame_selection">Enable frame selection</label><br>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>IDE/Client Settings</legend>
+            <table>
+                <tr><td colspan="4"><label><input type="radio" name="ide_settings" value="auto">Autodetect settings</label></td></tr>
+                <tr><td width="22px"></td><td><label id="broadcast_port_label" for="broadcast_port">Broadcasting port:</label></td><td><input type="text" id="broadcast_port"></td><td><button type="button" id="test">Test</button></td></tr>
+                <tr><td colspan=>&nbsp;</td><td colspan="3" align="right" id="test_result"></td></tr>
+                <tr><td colspan="4"><label><input type="radio" name="ide_settings" value="manual">Manual settings</label></td></tr>
+                <tr><td></td><td><label id="debug_port_label" for="debug_port">Debug port:</label></td><td><input type="text" id="debug_port"></td></tr>
+                <tr><td></td><td><label id="debug_host_label" for="debug_host">IP address:</label></td><td><input type="text" id="debug_host"></td></tr>
+                <tr><td></td><td colspan="2"><label id="use_ssl_label"><input type="checkbox" id="use_ssl">Encrypt communication using SSL</label></td></tr>
+            </table>
+        </fieldset>
+        <br>
+        <button type="button" id="restore">Restore Defaults</button>
+        <button type="submit">Save</button>
+    </form>
+
+    <script src="settings.js"></script>
+</body>
+</html>
