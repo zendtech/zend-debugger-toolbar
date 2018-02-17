@@ -4,6 +4,7 @@
   "manifest_version": 2,
   "name": "Zend Debugger Toolbar",
   "version": "4.0",
+  "author": "Rogue Wave Software",
   "homepage_url": "https://github.com/zendtech/zend-debugger-firefox",
   "icons": {
     "16": "icons/zde_icon16.png",
