@@ -71,7 +71,7 @@ function restoreDefaults() {
 
 function testAutoDetect() {
     document.querySelector("#test").disabled = true;
-    document.querySelector("#test_result").innerHTML = "Processing...";
+    document.querySelector("#test_result").textContent = "Processing...";
 
     var broadcastPort = document.querySelector("#broadcast_port").value;
     var url = "http://127.0.0.1:" + broadcastPort;
@@ -82,12 +82,12 @@ function testAutoDetect() {
 			if (this.status == 200 && this.responseText != null) {
 				var response = this.responseText;
 				if (response.includes("debug_port") && response.includes("debug_host")) {
-                    document.querySelector("#test_result").innerHTML = 
+                    document.querySelector("#test_result").textContent = 
                         "Success. IDE settings can be detected at port " + broadcastPort + ".";
 					return;
 				}
 			}
-            document.querySelector("#test_result").innerHTML = 
+            document.querySelector("#test_result").textContent = 
                 "Failure. IDE settings cannot be detected at port " + broadcastPort + ".";
 		}
     };
