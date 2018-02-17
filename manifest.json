@@ -22,17 +22,17 @@
   ],
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["common.js", "background.js"]
   },
 
   "browser_action": {
     "default_icon": "icons/debugmenu.gif",
     "default_title": "Debug with Zend Debugger",
-    "default_popup": "popup/menu.html"
+    "default_popup": "menu.html"
   },
 
   "options_ui": {
-    "page": "options/settings.html"
+    "page": "settings.html"
   }
 
 }

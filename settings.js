@@ -1,7 +1,6 @@
 var storage_keys = [
     "local_copy",
     "break_first_line",
-    "frame_selection",
     "ide_settings",
     "broadcast_port",
     "debug_port",
@@ -40,7 +39,6 @@ function saveOptions(e) {
     browser.storage.local.set({
         local_copy: document.querySelector("#local_copy").checked,
         break_first_line: document.querySelector("#break_first_line").checked,
-        frame_selection: document.querySelector("#frame_selection").checked,
         ide_settings: document.querySelector("input[name=ide_settings]:checked").value,
         broadcast_port: document.querySelector("#broadcast_port").value,
         debug_port: document.querySelector("#debug_port").value,
@@ -54,7 +52,6 @@ function restoreOptions() {
     function setCurrentChoice(result) {
         document.querySelector("#local_copy").checked = (result.local_copy == undefined) ? true : result.local_copy;
         document.querySelector("#break_first_line").checked = (result.break_first_line == undefined) ? true : result.break_first_line;
-        document.querySelector("#frame_selection").checked = (result.frame_selection == undefined) ? true : result.frame_selection;
         document.querySelector("input[name=ide_settings][value=" + (result.ide_settings || "auto") + "]").checked = true;
         document.querySelector("#broadcast_port").value = result.broadcast_port || "20080";
         document.querySelector("#debug_port").value = result.debug_port || "10137";

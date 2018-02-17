@@ -9,15 +9,44 @@ var storage_keys = [
   "use_ssl"
 ];
 
+/**
+ * Check if debug cookies are already set and update menu items with a cancel action.
+ */
+browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
+  browser.cookies.get({url: tabs[0].url, name: "debug_start_session"}).then(cookie => {
+    if (cookie) {
+      if (cookie.value == "1") {
+        document.querySelector(".debug_all_pages").innerHTML = "Cancel Debug All Pages";
+        document.querySelector(".debug_all_pages").classList.add("cancel");
+      } else if (cookie.value == "POST") {
+        document.querySelector(".debug_all_forms").innerHTML = "Cancel Debug All Forms (POST)";
+        document.querySelector(".debug_all_forms").classList.add("cancel");
+      }
+    } else {
+      browser.cookies.get({url: tabs[0].url, name: "debug_session_id"}).then(cookie => {
+        if (cookie && !cookie.expirationDate) {
+          document.querySelector(".debug_next_page").innerHTML = "Cancel Debug Next Page";
+          document.querySelector(".debug_next_page").classList.add("cancel");
+        }
+      });
+    }
+  });
+});
+
+/**
+ * Menu click listener.
+ */
 document.addEventListener("click", e => {
-  if (e.target.classList.contains("debug_current_page")) {
+  if (e.target.classList.contains("cancel")) {
+    cancelDebug();
+  } else if (e.target.classList.contains("debug_current_page")) {
     debugCurrentPage();
   } else if (e.target.classList.contains("debug_next_page")) {
     debugNextPage();
   } else if (e.target.classList.contains("debug_all_forms")) {
-    alert("Coming soon.")
+    debugAllForms();
   } else if (e.target.classList.contains("debug_all_pages")) {
-    alert("Coming soon.")
+    debugAllPages();
   } else if (e.target.classList.contains("profile_current_page")) {
     profileCurrentPage();
   } else if (e.target.classList.contains("settings")) {
@@ -28,6 +57,14 @@ document.addEventListener("click", e => {
   }
 });
 
+function cancelDebug() {
+  browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
+    resetIcon();
+    clearDebugCookies(tabs[0].url);
+    window.close();
+  });
+}
+
 function debugCurrentPage() {
   debug(false, true);
 }
@@ -37,24 +74,25 @@ function debugNextPage() {
 }
 
 function debugAllForms() {
-  debug(false, false);
+  debug(false, false, "POST");
 }
 
-function debugAllPage() {
-  debug(false, false);
+function debugAllPages() {
+  debug(false, false, "1");
 }
 
 function profileCurrentPage() {
   debug(true, true);
 }
 
-function debug(profile, reload) {
+function debug(profile, reload, session) {
   Promise.all([
     browser.tabs.query({active: true, currentWindow: true}),
     browser.storage.local.get(storage_keys)
   ]).then(([tabs, settings]) => {
     autoDetect(settings, function(props) {
-      setDebugCookies(tabs[0], props, profile, reload);
+      clearDebugCookies(tabs[0].url);
+      setDebugCookies(tabs[0], props, profile, reload, session);
     });
   }).catch(onError);
 }
@@ -67,7 +105,7 @@ function onError(error) {
 /**
  * 'Debug' action handler.
  */
-function setDebugCookies(tab, props, profile, reload) {
+function setDebugCookies(tab, props, profile, reload, session) {
   var expDate = null;
   if (reload) {
     expDate = Math.round(new Date() / 1000) + 2;
@@ -135,12 +173,23 @@ function setDebugCookies(tab, props, profile, reload) {
     });
   }
 
-  var setUseRemote = browser.cookies.set({
-    url: tab.url,
-    name: "use_remote",
-    value: "1",
-    expirationDate: expDate
-  });
+  var setUseRemote = null;
+  var setNoRemote = null;
+  if (props.local_copy) {
+    setUseRemote = browser.cookies.set({
+      url: tab.url,
+      name: "use_remote",
+      value: "1",
+      expirationDate: expDate
+    });
+  } else {
+    setNoRemote = browser.cookies.set({
+      url: tab.url,
+      name: "no_remote",
+      value: "1",
+      expirationDate: expDate
+    });
+  }
 
   var setUseSSL = null;
   if (props.use_ssl) {
@@ -178,6 +227,16 @@ function setDebugCookies(tab, props, profile, reload) {
     expirationDate: expDate
   });
 
+  var setDebugStartSession = null;
+  if (session) {
+    setDebugStartSession = browser.cookies.set({
+      url: tab.url,
+      name: "debug_start_session",
+      value: session,
+      expirationDate: expDate
+    });
+  }
+
   var setOriginalUrl = browser.cookies.set({
     url: tab.url,
     name: "original_url",
@@ -195,17 +254,23 @@ function setDebugCookies(tab, props, profile, reload) {
     setDebugJIT,
     setDebugStop,
     setUseRemote,
+    setNoRemote,
     setUseSSL,
     setStartProfile,
     setDebugCoverage,
     setDebugSessionId,
+    setDebugStartSession,
     setOriginalUrl
   ]).then(() => {
     if (reload) {
       browser.tabs.reload();
-      browser.browserAction.setIcon({path: "../icons/debugmenu.gif"});
+      browser.browserAction.setIcon({path: "icons/debugmenu.gif"});
+    } else if (session == "1") {
+      browser.browserAction.setIcon({path: "icons/debugmenu_all.gif"});
+    } else if (session == "POST") {
+      browser.browserAction.setIcon({path: "icons/debugmenu_post.gif"});
     } else {
-      browser.browserAction.setIcon({path: "../icons/debugmenu_next.gif"});
+      browser.browserAction.setIcon({path: "icons/debugmenu_next.gif"});
     }
     window.close();
   }).catch(onError);
@@ -238,8 +303,7 @@ function autoDetect(settings, callback) {
             if (settingsArray[i].indexOf("=") == -1) {
               continue;
             }
-            // Detect debug_port, debug_host, use_ssl and debug_fastfile
-            // settings
+            // Detect debug_port, debug_host, use_ssl and debug_fastfile settings
             var setting = settingsArray[i].split("=");
             if (setting[0] == "debug_port") {
               props.debug_port = setting[1];
