@@ -13,6 +13,12 @@
     "64": "icons/zde_icon64.png"
   },
 
+  "applications": {
+    "gecko": {
+      "id": "{714BDBD0-7E3A-11E6-86F1-66A48202D2A8}"
+    }
+  },
+
   "permissions": [
     "activeTab",
     "tabs",
