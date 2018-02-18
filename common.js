@@ -1,5 +1,5 @@
 function resetIcon() {
-    browser.browserAction.setIcon({path: "icons/debugmenu.gif"});
+    return browser.browserAction.setIcon({path: "icons/debugmenu.png"});
 }
 
 function clearDebugCookies(url) {

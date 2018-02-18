@@ -59,9 +59,10 @@ document.addEventListener("click", e => {
 
 function cancelDebug() {
   browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
-    resetIcon();
     clearDebugCookies(tabs[0].url);
-    window.close();
+    resetIcon().then(() => {
+      window.close();
+    });
   });
 }
 
@@ -262,17 +263,22 @@ function setDebugCookies(tab, props, profile, reload, session) {
     setDebugStartSession,
     setOriginalUrl
   ]).then(() => {
+    var icon = null;
+
     if (reload) {
       browser.tabs.reload();
-      browser.browserAction.setIcon({path: "icons/debugmenu.gif"});
+      icon = "icons/debugmenu.png";
     } else if (session == "1") {
-      browser.browserAction.setIcon({path: "icons/debugmenu_all.gif"});
+      icon = "icons/debugmenu_all.png";
     } else if (session == "POST") {
-      browser.browserAction.setIcon({path: "icons/debugmenu_post.gif"});
+      icon = "icons/debugmenu_post.png";
     } else {
-      browser.browserAction.setIcon({path: "icons/debugmenu_next.gif"});
+      icon = "icons/debugmenu_next.png";
     }
-    window.close();
+
+    browser.browserAction.setIcon({path: icon}).then(() => {
+      window.close();
+    });
   }).catch(onError);
 }
 

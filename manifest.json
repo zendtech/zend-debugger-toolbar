@@ -33,7 +33,7 @@
   },
 
   "browser_action": {
-    "default_icon": "icons/debugmenu.gif",
+    "default_icon": "icons/debugmenu.png",
     "default_title": "Debug with Zend Debugger",
     "default_popup": "menu.html"
   },
