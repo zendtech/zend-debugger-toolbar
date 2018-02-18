@@ -5,7 +5,7 @@
   "name": "Zend Debugger Toolbar",
   "version": "4.0.1",
   "author": "Rogue Wave Software",
-  "homepage_url": "https://github.com/zendtech/zend-debugger-firefox",
+  "homepage_url": "https://github.com/zendtech/zend-debugger-toolbar",
   "icons": {
     "16": "icons/zde_icon16.png",
     "32": "icons/zde_icon32.png",
