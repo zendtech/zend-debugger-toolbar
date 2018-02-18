@@ -1,11 +1,10 @@
-# Zend Debugger Toolbar add-on for Firefox
+# Zend Debugger Toolbar for Firefox, Chrome and Opera
 
-Zend Debugger Toolbar for Firefox provides integration with Zend debugging and profiling tools.
+Zend Debugger Toolbar is an extension for the Firefox, Chrome and Opera web browsers. It provides integration with Zend debugging and profiling tools.
 
 ## Installation
 
-The add-on is available for installation at Mozilla Add-ons: https://addons.mozilla.org/en-US/firefox/addon/zend-debugger-toolbar/
-
-## Testing locally
-
-Any modifications to the code can be tested locally as a [temporary installation in Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox).
+The extension is available for installation on:
+- Mozilla Add-ons: https://addons.mozilla.org/en-US/firefox/addon/zend-debugger-toolbar/
+- Chrome Web Store: https://chrome.google.com/webstore/detail/zend-debugger-toolbar/blnacaifcfklijlagknaklccljgeopnm
+- Opera add-ons: _awaiting approval_
