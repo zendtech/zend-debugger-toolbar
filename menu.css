@@ -1,0 +1,28 @@
+body {
+  margin-left: 0px;
+  margin-right: 0px;
+  font-size: 0.9em;
+}
+
+hr {
+  margin-block-start: 0.2em;
+  margin-block-end: 0.2em;
+  color: #f0f0f0;
+}
+
+.hidden {
+  display: none;
+}
+
+.button {
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #f0f0f0;
+}
+
