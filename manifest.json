@@ -3,7 +3,7 @@
   "description": "Provides integration with Zend debugging and profiling tools.",
   "manifest_version": 2,
   "name": "Zend Debugger Toolbar",
-  "version": "4.0",
+  "version": "4.0.1",
   "author": "Rogue Wave Software",
   "homepage_url": "https://github.com/zendtech/zend-debugger-firefox",
   "icons": {
