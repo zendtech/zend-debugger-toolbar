@@ -20,6 +20,7 @@ hr {
   padding-top: 4px;
   padding-bottom: 4px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .button:hover {
